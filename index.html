@@ -19,6 +19,7 @@
         
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .error-msg { color: #f87171; background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(239, 68, 68, 0.2); margin-top: 1rem; font-size: 0.875rem; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -66,6 +67,7 @@
             <div id="lecture-loading" class="flex flex-col items-center py-20">
                 <div class="loader mb-4"></div>
                 <p id="lecture-status" class="text-slate-400 text-center">Пишу лекцію, MATB, почекай трохи...</p>
+                <div id="lecture-error-box" class="hidden error-msg"></div>
                 <button id="retry-lecture-btn" onclick="loadLecture()" class="hidden mt-4 bg-slate-700 px-6 py-2 rounded-lg text-sm">Спробувати ще раз</button>
             </div>
             <div id="lecture-content" class="space-y-10"></div>
@@ -82,6 +84,7 @@
             <div id="test-loading" class="flex flex-col items-center justify-center flex-grow py-20">
                 <div class="loader mb-4"></div>
                 <p id="test-status" class="text-slate-400 text-center">Створюю питання для геніїв...</p>
+                <div id="test-error-box" class="hidden error-msg"></div>
                 <button id="retry-test-btn" onclick="loadTest()" class="hidden mt-4 bg-slate-700 px-6 py-2 rounded-lg text-sm">Спробувати ще раз</button>
             </div>
             <div id="test-content" class="hidden">
@@ -97,7 +100,7 @@
     </div>
 
     <script type="module">
-        const apiKey = ""; // ПРИМЕЧАНИЕ: Окружение само подставит ключ, если оставить пустым
+        const apiKey = ""; 
         let currentSubject = "";
         let currentTopic = "";
         let testData = [];
@@ -109,28 +112,19 @@
 
         function cleanJSON(text) {
             try {
-                // Если ИИ вернул ответ в формате Markdown с блоком кода
-                const match = text.match(/```json?\s*([\s\S]*?)\s*```/);
-                const jsonPart = match ? match[1] : text;
-                return JSON.parse(jsonPart);
+                const match = text.match(/\{[\s\S]*\}/);
+                if (match) return JSON.parse(match[0]);
+                return JSON.parse(text);
             } catch (e) {
-                // Пытаемся найти фигурные скобки вручную
-                try {
-                    const start = text.indexOf('{');
-                    const end = text.lastIndexOf('}');
-                    if (start === -1 || end === -1) return null;
-                    return JSON.parse(text.substring(start, end + 1));
-                } catch (e2) {
-                    console.error("JSON Clean Failure:", text);
-                    return null;
-                }
+                console.error("JSON Parsing failed:", text);
+                return null;
             }
         }
 
         async function askAI(prompt, isTest = false) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             
-            for (let i = 0; i < 5; i++) { // Увеличили кол-во попыток до 5 с экспоненциальной задержкой
+            for (let i = 0; i < 3; i++) {
                 try {
                     const resp = await fetch(url, {
                         method: 'POST',
@@ -138,28 +132,33 @@
                         body: JSON.stringify({
                             contents: [{ parts: [{ text: prompt }] }],
                             generationConfig: { 
-                                temperature: isTest ? 0.1 : 0.7,
+                                temperature: isTest ? 0.2 : 0.7,
                                 responseMimeType: "application/json"
                             }
                         })
                     });
                     
-                    if (!resp.ok) throw new Error(`HTTP Error: ${resp.status}`);
+                    const result = await resp.json();
                     
-                    const data = await resp.json();
-                    if (!data.candidates || !data.candidates[0]) throw new Error("Empty AI response");
+                    if (!resp.ok) {
+                        throw new Error(result.error?.message || `HTTP Error ${resp.status}`);
+                    }
+
+                    if (!result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        throw new Error("AI returned no content");
+                    }
                     
-                    const text = data.candidates[0].content.parts[0].text;
+                    const text = result.candidates[0].content.parts[0].text;
                     const parsed = cleanJSON(text);
                     if (parsed) return parsed;
                     
+                    throw new Error("Invalid JSON format from AI");
                 } catch (e) {
-                    const delay = Math.pow(2, i) * 1000;
-                    console.error(`Attempt ${i+1} failed. Retrying in ${delay}ms...`, e);
-                    await new Promise(r => setTimeout(r, delay));
+                    console.error(`Attempt ${i+1} failed:`, e);
+                    if (i === 2) throw e;
+                    await new Promise(r => setTimeout(r, 1500 * (i + 1)));
                 }
             }
-            throw new Error("CRITICAL AI FAILURE");
         }
 
         window.startSession = (type) => {
@@ -181,14 +180,15 @@
             document.getElementById('lecture-title').innerText = currentTopic;
             document.getElementById('lecture-loading').classList.remove('hidden');
             document.getElementById('retry-lecture-btn').classList.add('hidden');
+            document.getElementById('lecture-error-box').classList.add('hidden');
             document.getElementById('lecture-status').innerText = "Пишу лекцію, MATB, почекай трохи...";
             
             const content = document.getElementById('lecture-content');
             content.innerHTML = "";
 
-            const prompt = `Дій як найкращий вчитель у світі. Напиши лекцію для учня на тему "${currentTopic}" (предмет: ${currentSubject}). 
-            Розбий на 4 блоки. Для кожного блоку дай imagePrompt (англійською) для генерації ілюстрації.
-            Відповідай ТІЛЬКИ у форматі JSON: { "blocks": [{ "title": "Заголовок", "text": "Текст лекції", "imagePrompt": "опис картинки" }] }`;
+            const prompt = `Create a detailed lecture in Ukrainian on the topic "${currentTopic}" (Subject: ${currentSubject}). 
+            Structure: 4 blocks. For each block, provide a title, content text (minimum 3 paragraphs), and an English imagePrompt for illustration.
+            Format: JSON { "blocks": [{ "title": "string", "text": "string", "imagePrompt": "string" }] }`;
 
             try {
                 const data = await askAI(prompt);
@@ -203,7 +203,7 @@
                     `;
                     
                     const imgPlaceholder = document.createElement('div');
-                    imgPlaceholder.className = "w-full aspect-video rounded-2xl bg-slate-800/50 border border-white/5 flex items-center justify-center overflow-hidden shadow-inner";
+                    imgPlaceholder.className = "w-full aspect-video rounded-2xl bg-slate-800/50 border border-white/5 flex items-center justify-center overflow-hidden shadow-inner mt-4";
                     imgPlaceholder.innerHTML = '<div class="loader"></div>';
                     block.appendChild(imgPlaceholder);
                     content.appendChild(block);
@@ -213,8 +213,12 @@
                     });
                 });
             } catch (e) {
-                document.getElementById('lecture-status').innerText = "Помилка завантаження. Спробуй ще раз.";
+                const errBox = document.getElementById('lecture-error-box');
+                errBox.innerText = `Помилка: ${e.message}`;
+                errBox.classList.remove('hidden');
+                document.getElementById('lecture-status').innerText = "Не вдалося завантажити лекцію.";
                 document.getElementById('retry-lecture-btn').classList.remove('hidden');
+                document.querySelector('#lecture-loading .loader').classList.add('hidden');
             }
         }
 
@@ -223,7 +227,7 @@
             try {
                 const r = await fetch(url, {
                     method: 'POST',
-                    body: JSON.stringify({ instances: { prompt: `${p}, educational digital art style, bright colors, 4k` } })
+                    body: JSON.stringify({ instances: { prompt: `${p}, high quality educational illustration, 4k` } })
                 });
                 const d = await r.json();
                 return `data:image/png;base64,${d.predictions[0].bytesBase64Encoded}`;
@@ -234,10 +238,12 @@
             document.getElementById('test-loading').classList.remove('hidden');
             document.getElementById('test-content').classList.add('hidden');
             document.getElementById('retry-test-btn').classList.add('hidden');
+            document.getElementById('test-error-box').classList.add('hidden');
             document.getElementById('test-status').innerText = "Створюю питання для геніїв...";
 
-            const prompt = `Створи тест з 16 складних питань на тему "${currentTopic}" (предмет: ${currentSubject}). 
-            Один правильний варіант. Тільки JSON формат: { "questions": [{ "q": "Питання", "options": ["А", "Б", "В", "Г"], "correct": 0 }] }`;
+            const prompt = `Create a multiple-choice test in Ukrainian with 16 questions on the topic "${currentTopic}" (Subject: ${currentSubject}). 
+            Each question must have 4 options and 1 correct answer (0-indexed). 
+            Format: JSON { "questions": [{ "q": "string", "options": ["string", "string", "string", "string"], "correct": number }] }`;
 
             try {
                 const data = await askAI(prompt, true);
@@ -249,8 +255,12 @@
                 renderQuestion();
                 startTimer();
             } catch (e) {
-                document.getElementById('test-status').innerText = "Помилка генерації. ІІ тупить або мережа лягла.";
+                const errBox = document.getElementById('test-error-box');
+                errBox.innerText = `Помилка: ${e.message}`;
+                errBox.classList.remove('hidden');
+                document.getElementById('test-status').innerText = "Помилка генерації тесту.";
                 document.getElementById('retry-test-btn').classList.remove('hidden');
+                document.querySelector('#test-loading .loader').classList.add('hidden');
             }
         };
 
@@ -297,9 +307,12 @@
             const timerEl = document.getElementById('timer');
             timerInt = setInterval(() => {
                 timerVal--;
+                if (timerVal < 0) {
+                    finishTest();
+                    return;
+                }
                 const m = Math.floor(timerVal/60), s = timerVal%60;
                 timerEl.innerText = `${m}:${s < 10 ? '0'+s : s}`;
-                if (timerVal <= 0) finishTest();
             }, 1000);
         }
 
