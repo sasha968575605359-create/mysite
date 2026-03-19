@@ -52,7 +52,12 @@
 
         .hidden { display: none; }
         
-        pre { white-space: pre-wrap; word-wrap: break-word; }
+        .timer-bar {
+            height: 4px;
+            background: #a855f7;
+            width: 100%;
+            transition: width 1s linear;
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
@@ -60,28 +65,38 @@
     <!-- Главный экран -->
     <div id="setup-screen" class="glass-panel p-8 rounded-[2rem] w-full max-w-lg transition-all">
         <div class="text-center mb-10">
-            <h1 class="heading text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 mb-2">STUDY HUB v2</h1>
-            <p class="text-slate-500 text-sm">Огромная база знаний 8 класса для тебя, MATB.</p>
+            <h1 class="heading text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 mb-2">STUDY HUB v3</h1>
+            <p class="text-slate-500 text-sm">18 предметов, жесткие тесты и таймер для MATB.</p>
         </div>
 
         <div class="space-y-6">
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Предмет</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Предмет (18 дисциплин)</label>
                 <select id="subject-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-purple-500 transition-colors cursor-pointer text-lg text-white">
                     <option value="Алгебра">🔢 Алгебра</option>
                     <option value="Геометрия">📏 Геометрия</option>
                     <option value="Физика">⚡ Физика</option>
-                    <option value="Литература">📚 Литература</option>
-                    <option value="История">📜 История</option>
                     <option value="Химия">🧪 Химия</option>
                     <option value="Биология">🌿 Биология</option>
                     <option value="География">🌍 География</option>
+                    <option value="История Украины">📜 История Украины</option>
+                    <option value="Всемирная история">🏛️ Всемирная история</option>
+                    <option value="Украинский язык">🇺🇦 Украинский язык</option>
+                    <option value="Украинская литература">📖 Укр. литература</option>
+                    <option value="Английский язык">🇬🇧 Английский язык</option>
+                    <option value="Зарубежная литература">📚 Зарубежная лит-ра</option>
+                    <option value="Информатика">💻 Информатика</option>
+                    <option value="Правоведение">⚖️ Правоведение</option>
+                    <option value="Основы здоровья">🏥 Основы здоровья</option>
+                    <option value="Искусство">🎨 Искусство</option>
+                    <option value="Физическая культура">⚽ Физкультура</option>
+                    <option value="Трудовое обучение">🛠️ Трудовое обучение</option>
                 </select>
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Тема занятия</label>
-                <input type="text" id="topic-input" list="topic-hints" placeholder="Начни вводить тему..." class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-purple-500 transition-all text-lg text-white">
+                <input type="text" id="topic-input" list="topic-hints" placeholder="Введи тему..." class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-purple-500 transition-all text-lg text-white">
                 <datalist id="topic-hints">
                     <option value="Квадратные корни">
                     <option value="Квадратные уравнения">
@@ -111,13 +126,13 @@
     <!-- Экран Контента -->
     <div id="content-screen" class="hidden w-full max-w-4xl glass-panel p-8 rounded-[2rem] min-h-[600px] flex flex-col">
         <div class="flex justify-between items-center mb-8">
-            <button onclick="window.location.reload()" class="text-slate-500 hover:text-white transition-colors">← Назад</button>
-            <div id="status-badge" class="px-4 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold border border-indigo-500/20 uppercase">БАЗА ДАННЫХ</div>
+            <button onclick="exitSession()" class="text-slate-500 hover:text-white transition-colors">← Назад</button>
+            <div id="status-badge" class="px-4 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold border border-indigo-500/20 uppercase">ПОДГОТОВКА</div>
         </div>
 
         <div id="loading-state" class="flex-grow flex flex-col items-center justify-center space-y-4">
             <div class="loader"></div>
-            <p class="text-slate-400 animate-pulse text-sm">Извлекаю данные из архивов...</p>
+            <p class="text-slate-400 animate-pulse text-sm">Собираю инфу для MATB...</p>
         </div>
 
         <div id="result-area" class="hidden space-y-8 pb-10 overflow-y-auto max-h-[70vh] pr-4">
@@ -126,49 +141,6 @@
     </div>
 
     <script type="module">
-        // ==========================================
-        // ОГРОМНАЯ ЛОКАЛЬНАЯ БАЗА (MATB SPECIAL)
-        // Сюда можно добавлять сотни тем.
-        // ==========================================
-        const LOCAL_DATABASE = {
-            "Алгебра": {
-                "Квадратные корни": {
-                    lecture: {
-                        blocks: [
-                            { title: "Определение", text: "Арифметическим квадратным корнем из числа a называется неотрицательное число, квадрат которого равен a.", imgPrompt: "Mathematical square root symbol on a dark background" },
-                            { title: "Свойства", text: "Корень из произведения равен произведению корней. Корень из дроби равен корню из числителя, деленному на корень из знаменателя.", imgPrompt: "Algebraic formulas glowing in neon colors" },
-                            { title: "Извлечение корня", text: "Процесс нахождения корня называется извлечением. Если число не является полным квадратом, корень будет иррациональным числом.", imgPrompt: "Numbers and symbols floating in space" }
-                        ]
-                    },
-                    test: {
-                        questions: [
-                            { q: "Чему равен √64?", options: ["6", "7", "8", "9"], correct: 2 },
-                            { q: "Вычислите √0,16", options: ["0,4", "0,04", "4", "0,8"], correct: 0 },
-                            { q: "√a существует только при...", options: ["a > 0", "a ≥ 0", "a < 0", "любом a"], correct: 1 }
-                        ]
-                    }
-                }
-            },
-            "Литература": {
-                "Мещанин во дворянстве": {
-                    lecture: {
-                        blocks: [
-                            { title: "Автор и эпоха", text: "Комедия-балет Мольера, написанная в 1670 году. Это классицизм в чистом виде, высмеивающий пороки общества.", imgPrompt: "Old French theater stage with baroque decorations" },
-                            { title: "Главный герой", text: "Журден — богатый мещанин, который одержим идеей стать дворянином. Его глупость и тщеславие делают его легкой добычей для мошенников.", imgPrompt: "Man in ridiculous expensive clothes looking in the mirror" },
-                            { title: "Основной конфликт", text: "Столкновение истинного благородства и пустой внешней формы. Мольер показывает, что образованность нельзя купить за деньги.", imgPrompt: "Struggle between common sense and vanity" }
-                        ]
-                    },
-                    test: {
-                        questions: [
-                            { q: "Кто написал 'Мещанин во дворянстве'?", options: ["Корнель", "Расин", "Мольер", "Вольтер"], correct: 2 },
-                            { q: "Как зовут главного героя?", options: ["Клеонт", "Дорант", "Журден", "Люсиль"], correct: 2 },
-                            { q: "Чему Журден удивился на уроке философии?", options: ["Что он говорит прозой", "Что Земля круглая", "Что буквы бывают гласные", "Что латынь сложная"], correct: 0 }
-                        ]
-                    }
-                }
-            }
-        };
-
         const API_KEY = "AIzaSyAr5VqsTgBM7vrk5NbsKjZuudjx-u_g5Ek"; 
 
         const setupScreen = document.getElementById('setup-screen');
@@ -181,6 +153,13 @@
         let testQuestions = [];
         let currentIdx = 0;
         let score = 0;
+        let timerInterval = null;
+        let timeLeft = 0;
+
+        window.exitSession = () => {
+            clearInterval(timerInterval);
+            window.location.reload();
+        };
 
         window.initSession = async (mode) => {
             const topic = document.getElementById('topic-input').value.trim();
@@ -191,25 +170,56 @@
             setupScreen.classList.add('hidden');
             contentScreen.classList.remove('hidden');
 
-            // Пытаемся найти в базе
-            const localData = LOCAL_DATABASE[subject]?.[topic];
-
-            if (localData) {
-                statusBadge.innerText = "ЛОКАЛЬНАЯ БАЗА";
-                setTimeout(() => {
-                    loadingState.classList.add('hidden');
-                    resultArea.classList.remove('hidden');
-                    if (mode === 'lecture') renderLecture(topic, localData.lecture);
-                    else startTest(localData.test);
-                }, 800);
-            } else {
-                // Если нет в базе - идем к ИИ
-                statusBadge.innerText = "ГЕНЕРАЦИЯ ИИ";
-                apiError.classList.remove('hidden');
-                if (mode === 'lecture') generateAI(subject, topic, 'lecture');
-                else generateAI(subject, topic, 'test');
-            }
+            statusBadge.innerText = "ГЕНЕРАЦИЯ ИИ";
+            apiError.classList.remove('hidden');
+            
+            generateAI(subject, topic, mode);
         };
+
+        async function generateAI(subject, topic, mode) {
+            try {
+                const model = "gemini-2.0-flash";
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+                
+                let prompt = "";
+                if (mode === 'lecture') {
+                    prompt = `Напиши ОГРОМНУЮ лекцию для 8 класса на тему "${topic}" (${subject}). JSON формат: { "blocks": [{ "title": "Заголовок", "text": "Много текста...", "imgPrompt": "English prompt for image" }] }`;
+                } else {
+                    // Рандомное количество вопросов от 16 до 40
+                    const qCount = Math.floor(Math.random() * (40 - 16 + 1)) + 16;
+                    prompt = `Создай сложный тест из ${qCount} вопросов для 8 класса на тему "${topic}" (${subject}). 
+                    JSON формат: { "questions": [{ "q": "Вопрос", "options": ["А", "Б", "В", "Г"], "correct": 0 }] }`;
+                }
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                if (!response.ok) throw new Error("API сдохло");
+
+                const data = await response.json();
+                const content = JSON.parse(data.candidates[0].content.parts[0].text);
+                
+                loadingState.classList.add('hidden');
+                resultArea.classList.remove('hidden');
+
+                if (mode === 'lecture') {
+                    statusBadge.innerText = "МЕГА-ЛЕКЦИЯ";
+                    renderLecture(topic, content);
+                } else {
+                    statusBadge.innerText = "ХАРДКОР-ТЕСТ";
+                    startTest(content);
+                }
+            } catch (e) {
+                alert("Ошибка: " + e.message);
+                exitSession();
+            }
+        }
 
         function renderLecture(topic, data) {
             resultArea.innerHTML = `<h2 class="heading text-4xl font-bold mb-10 text-white">${topic}</h2>`;
@@ -218,11 +228,7 @@
                 el.className = "question-card space-y-6 mb-12 border-b border-white/5 pb-10";
                 el.innerHTML = `
                     <h3 class="text-2xl font-bold text-purple-400">${block.title}</h3>
-                    <div class="text-slate-300 leading-relaxed text-lg">${block.text}</div>
-                    <div class="rounded-3xl overflow-hidden bg-white/5 aspect-video flex flex-col items-center justify-center border border-white/5 text-slate-500">
-                        <span class="text-4xl mb-2">🖼️</span>
-                        <p class="text-[10px] uppercase font-bold tracking-tighter">Visual: ${block.imgPrompt}</p>
-                    </div>
+                    <div class="text-slate-300 leading-relaxed text-lg">${block.text.replace(/\n/g, '<br>')}</div>
                 `;
                 resultArea.appendChild(el);
             });
@@ -236,83 +242,81 @@
         }
 
         function renderQuestion() {
+            clearInterval(timerInterval);
             const q = testQuestions[currentIdx];
+            
+            // Время на вопрос от 5 до 10 секунд
+            timeLeft = Math.floor(Math.random() * (10 - 5 + 1)) + 5;
+            const initialTime = timeLeft;
+
             resultArea.innerHTML = `
                 <div class="question-card">
-                    <div class="flex justify-between text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest">
+                    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">
                         <span>Вопрос ${currentIdx + 1} / ${testQuestions.length}</span>
-                        <span class="text-purple-400">Верно: ${score}</span>
+                        <span class="text-purple-400">Счет: ${score}</span>
                     </div>
+                    
+                    <div class="w-full bg-white/5 h-1 mb-6 rounded-full overflow-hidden">
+                        <div id="timer-bar" class="timer-bar" style="width: 100%"></div>
+                    </div>
+
                     <h2 class="text-2xl font-bold mb-8 text-white">${q.q}</h2>
                     <div id="options" class="grid grid-cols-1 gap-3"></div>
+                    <p class="mt-6 text-center text-xs text-slate-600 font-bold uppercase tracking-widest">У тебя ${timeLeft} секунд!</p>
                 </div>
             `;
+
+            const bar = document.getElementById('timer-bar');
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const percent = (timeLeft / initialTime) * 100;
+                bar.style.width = percent + '%';
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleAnswer(-1); // Пропуск по времени
+                }
+            }, 1000);
 
             q.options.forEach((opt, i) => {
                 const btn = document.createElement('button');
                 btn.className = "w-full text-left p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500 transition-all font-medium text-slate-300";
                 btn.innerText = opt;
-                btn.onclick = () => {
-                    const all = document.querySelectorAll('#options button');
-                    all.forEach(b => b.disabled = true);
-                    if (i === q.correct) {
-                        btn.classList.add('bg-green-500/20', 'border-green-500/50', 'text-green-400');
-                        score++;
-                    } else {
-                        btn.classList.add('bg-red-500/20', 'border-red-500/50', 'text-red-400');
-                        all[q.correct].classList.add('bg-green-500/20', 'border-green-500/50', 'text-green-400');
-                    }
-                    setTimeout(() => {
-                        currentIdx++;
-                        if (currentIdx < testQuestions.length) renderQuestion();
-                        else showFinal();
-                    }, 1200);
-                };
+                btn.onclick = () => handleAnswer(i, btn);
                 document.getElementById('options').appendChild(btn);
             });
+        }
+
+        function handleAnswer(choice, btn = null) {
+            clearInterval(timerInterval);
+            const correct = testQuestions[currentIdx].correct;
+            const all = document.querySelectorAll('#options button');
+            all.forEach(b => b.disabled = true);
+
+            if (choice === correct) {
+                if (btn) btn.classList.add('bg-green-500/20', 'border-green-500/50', 'text-green-400');
+                score++;
+            } else {
+                if (btn) btn.classList.add('bg-red-500/20', 'border-red-500/50', 'text-red-400');
+                if (all[correct]) all[correct].classList.add('bg-green-500/20', 'border-green-500/50', 'text-green-400');
+            }
+
+            setTimeout(() => {
+                currentIdx++;
+                if (currentIdx < testQuestions.length) renderQuestion();
+                else showFinal();
+            }, 1000);
         }
 
         function showFinal() {
             resultArea.innerHTML = `
                 <div class="text-center py-10">
-                    <h2 class="heading text-4xl font-bold mb-4">Разнос окончен!</h2>
-                    <p class="text-slate-400 text-xl mb-10">Результат: ${score} / ${testQuestions.length}</p>
-                    <button onclick="window.location.reload()" class="btn-primary px-10 py-4 rounded-2xl font-bold">На главную</button>
+                    <div class="text-6xl mb-6">🏆</div>
+                    <h2 class="heading text-4xl font-bold mb-4">Разнос закончен!</h2>
+                    <p class="text-slate-400 text-xl mb-10">Твой итоговый балл: <span class="text-purple-400 font-bold">${score}</span> из ${testQuestions.length}</p>
+                    <button onclick="exitSession()" class="btn-primary px-10 py-4 rounded-2xl font-bold">Вернуться к списку</button>
                 </div>
             `;
-        }
-
-        async function generateAI(subject, topic, mode) {
-            try {
-                const model = "gemini-2.0-flash";
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
-                
-                let prompt = "";
-                if (mode === 'lecture') {
-                    prompt = `Лекция 8 класс "${topic}" (${subject}). JSON: { "blocks": [{ "title": "...", "text": "...", "imgPrompt": "..." }] }`;
-                } else {
-                    prompt = `Тест 10 вопросов 8 класс "${topic}". JSON: { "questions": [{ "q": "...", "options": ["..."], "correct": 0 }] }`;
-                }
-
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                });
-
-                const data = await response.json();
-                const content = JSON.parse(data.candidates[0].content.parts[0].text);
-                
-                loadingState.classList.add('hidden');
-                resultArea.classList.remove('hidden');
-                if (mode === 'lecture') renderLecture(topic, content);
-                else startTest(content);
-            } catch (e) {
-                alert("ИИ тоже не вывез: " + e.message);
-            }
         }
     </script>
 </body>
