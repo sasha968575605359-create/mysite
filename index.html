@@ -13,6 +13,10 @@
         .hidden { display: none; }
         .loader { border: 4px solid rgba(255, 255, 255, 0.1); border-left-color: #818cf8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Цвета для ответов */
+        .correct-answer { background-color: rgba(34, 197, 94, 0.2) !important; border-color: #22c55e !important; color: #4ade80 !important; }
+        .wrong-answer { background-color: rgba(239, 68, 68, 0.2) !important; border-color: #ef4444 !important; color: #f87171 !important; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -27,12 +31,23 @@
                 <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Предмет (НУШ)</label>
                 <select id="subject" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
                     <option value="Математика">Математика</option>
+                    <option value="Алгебра">Алгебра</option>
+                    <option value="Геометрія">Геометрія</option>
                     <option value="Українська мова">Українська мова</option>
+                    <option value="Українська література">Українська література</option>
+                    <option value="Зарубіжна література">Зарубіжна література</option>
+                    <option value="Англійська мова">Англійська мова</option>
                     <option value="Історія України">Історія України</option>
-                    <option value="Біологія">Біологія</option>
+                    <option value="Всесвітня історія">Всесвітня історія</option>
+                    <option value="Біологія і екологія">Біологія і екологія</option>
                     <option value="Географія">Географія</option>
                     <option value="Фізика">Фізика</option>
+                    <option value="Астрономія">Астрономія</option>
                     <option value="Хімія">Хімія</option>
+                    <option value="Інформатика">Інформатика</option>
+                    <option value="Правознавство">Правознавство</option>
+                    <option value="Мистецтво">Мистецтво</option>
+                    <option value="Основи здоров'я">Основи здоров'я</option>
                 </select>
             </div>
 
@@ -85,6 +100,10 @@
                 <div id="options-container" class="grid grid-cols-1 gap-4">
                     <!-- Кнопки ответов -->
                 </div>
+                <!-- Кнопка Далее -->
+                <button id="next-btn" onclick="nextQuestion()" class="hidden w-full mt-8 bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20">
+                    Далее →
+                </button>
             </div>
         </div>
     </div>
@@ -98,6 +117,7 @@
         let testData = [];
         let currentQuestionIdx = 0;
         let score = 0;
+        let isAnswered = false;
 
         window.startSession = async (type) => {
             currentSubject = document.getElementById('subject').value;
@@ -126,6 +146,15 @@
             document.getElementById('test-screen').classList.add('hidden');
             document.getElementById('lecture-content').innerHTML = "";
             document.getElementById('test-content').classList.add('hidden');
+            document.getElementById('test-content').innerHTML = `
+                <div class="flex justify-between text-sm text-slate-400 mb-4">
+                    <span id="question-index">Вопрос 1 из 16</span>
+                    <span id="score-display">Баллы: 0</span>
+                </div>
+                <h3 id="question-text" class="text-2xl font-semibold mb-8"></h3>
+                <div id="options-container" class="grid grid-cols-1 gap-4"></div>
+                <button id="next-btn" onclick="nextQuestion()" class="hidden w-full mt-8 bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20">Далее →</button>
+            `;
         };
 
         async function fetchAI(prompt) {
@@ -160,10 +189,8 @@
                     const blockEl = document.createElement('div');
                     blockEl.className = "space-y-4 animate-fade-in";
                     
-                    // Заголовок и текст
                     blockEl.innerHTML = `<h3 class="text-2xl font-bold text-indigo-300">${block.title}</h3><p class="text-slate-300 text-lg">${block.text}</p>`;
                     
-                    // Генерация картинки
                     const imgDiv = document.createElement('div');
                     imgDiv.className = "w-full aspect-video rounded-2xl bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-700 relative";
                     imgDiv.innerHTML = `<div class="loader"></div>`;
@@ -219,6 +246,9 @@
                 return;
             }
 
+            isAnswered = false;
+            document.getElementById('next-btn').classList.add('hidden');
+            
             const q = testData[currentQuestionIdx];
             document.getElementById('question-index').innerText = `Вопрос ${currentQuestionIdx + 1} из ${testData.length}`;
             document.getElementById('score-display').innerText = `Баллы: ${score}`;
@@ -229,9 +259,9 @@
 
             q.options.forEach((opt, idx) => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left p-4 rounded-xl bg-slate-800 border border-slate-700 hover:border-indigo-500 transition-all hover:bg-slate-700";
+                btn.className = "option-btn w-full text-left p-4 rounded-xl bg-slate-800 border border-slate-700 hover:border-indigo-500 transition-all hover:bg-slate-700";
                 btn.innerText = opt;
-                btn.onclick = () => checkAnswer(idx);
+                btn.onclick = () => checkAnswer(idx, btn);
                 container.appendChild(btn);
             });
 
@@ -240,7 +270,6 @@
 
         function startTimer() {
             clearInterval(timerInterval);
-            // Случайное время от 5 до 10 минут (в секундах)
             let timeLeft = (Math.floor(Math.random() * 6) + 5) * 60;
             
             const updateUI = () => {
@@ -250,7 +279,7 @@
                 
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
-                    checkAnswer(-1); // Время вышло
+                    if (!isAnswered) checkAnswer(-1, null);
                 }
                 timeLeft--;
             };
@@ -259,17 +288,29 @@
             timerInterval = setInterval(updateUI, 1000);
         }
 
-        function checkAnswer(selectedIdx) {
+        function checkAnswer(selectedIdx, btn) {
+            if (isAnswered) return;
+            isAnswered = true;
             clearInterval(timerInterval);
+            
             const correct = testData[currentQuestionIdx].correct;
+            const buttons = document.querySelectorAll('.option-btn');
+
+            buttons[correct].classList.add('correct-answer');
 
             if (selectedIdx === correct) {
                 score++;
+            } else if (selectedIdx !== -1) {
+                btn.classList.add('wrong-answer');
             }
 
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        window.nextQuestion = () => {
             currentQuestionIdx++;
             showQuestion();
-        }
+        };
 
         function finishTest() {
             const container = document.getElementById('test-content');
