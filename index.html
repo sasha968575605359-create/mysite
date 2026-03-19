@@ -19,7 +19,7 @@
         
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .error-msg { color: #f87171; background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(239, 68, 68, 0.2); margin-top: 1rem; font-size: 0.875rem; }
+        .error-msg { color: #f87171; background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(239, 68, 68, 0.2); margin-top: 1rem; font-size: 0.875rem; word-break: break-all; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -110,13 +110,19 @@
         let timerVal = 600;
         let timerInt = null;
 
-        function cleanJSON(text) {
+        // Покращений парсер JSON, який витягує дані навіть з "брудного" тексту
+        function extractJSON(text) {
             try {
-                const match = text.match(/\{[\s\S]*\}/);
-                if (match) return JSON.parse(match[0]);
+                // Шукаємо першу { і останню }
+                const firstBracket = text.indexOf('{');
+                const lastBracket = text.lastIndexOf('}');
+                if (firstBracket !== -1 && lastBracket !== -1) {
+                    const jsonString = text.substring(firstBracket, lastBracket + 1);
+                    return JSON.parse(jsonString);
+                }
                 return JSON.parse(text);
             } catch (e) {
-                console.error("JSON Parsing failed:", text);
+                console.error("JSON Parse Error:", e, "Raw text:", text);
                 return null;
             }
         }
@@ -124,7 +130,7 @@
         async function askAI(prompt, isTest = false) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 5; i++) { // Більше спроб
                 try {
                     const resp = await fetch(url, {
                         method: 'POST',
@@ -132,7 +138,7 @@
                         body: JSON.stringify({
                             contents: [{ parts: [{ text: prompt }] }],
                             generationConfig: { 
-                                temperature: isTest ? 0.2 : 0.7,
+                                temperature: isTest ? 0.1 : 0.5,
                                 responseMimeType: "application/json"
                             }
                         })
@@ -141,22 +147,20 @@
                     const result = await resp.json();
                     
                     if (!resp.ok) {
-                        throw new Error(result.error?.message || `HTTP Error ${resp.status}`);
+                        throw new Error(result.error?.message || `Помилка API: ${resp.status}`);
                     }
 
-                    if (!result.candidates?.[0]?.content?.parts?.[0]?.text) {
-                        throw new Error("AI returned no content");
-                    }
+                    const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!aiText) throw new Error("ІІ повернув порожню відповідь");
                     
-                    const text = result.candidates[0].content.parts[0].text;
-                    const parsed = cleanJSON(text);
-                    if (parsed) return parsed;
+                    const data = extractJSON(aiText);
+                    if (data) return data;
                     
-                    throw new Error("Invalid JSON format from AI");
+                    throw new Error("Не вдалося розпізнати формат даних");
                 } catch (e) {
-                    console.error(`Attempt ${i+1} failed:`, e);
-                    if (i === 2) throw e;
-                    await new Promise(r => setTimeout(r, 1500 * (i + 1)));
+                    console.warn(`Спроба ${i+1} не вдалася:`, e.message);
+                    if (i === 4) throw e;
+                    await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i))); // Експоненціальна затримка
                 }
             }
         }
@@ -182,13 +186,17 @@
             document.getElementById('retry-lecture-btn').classList.add('hidden');
             document.getElementById('lecture-error-box').classList.add('hidden');
             document.getElementById('lecture-status').innerText = "Пишу лекцію, MATB, почекай трохи...";
+            document.querySelector('#lecture-loading .loader').classList.remove('hidden');
             
             const content = document.getElementById('lecture-content');
             content.innerHTML = "";
 
-            const prompt = `Create a detailed lecture in Ukrainian on the topic "${currentTopic}" (Subject: ${currentSubject}). 
-            Structure: 4 blocks. For each block, provide a title, content text (minimum 3 paragraphs), and an English imagePrompt for illustration.
-            Format: JSON { "blocks": [{ "title": "string", "text": "string", "imagePrompt": "string" }] }`;
+            const prompt = `Write a detailed educational lecture in Ukrainian.
+            Subject: ${currentSubject}
+            Topic: ${currentTopic}
+            Requirement: Exactly 4 sections. Each section must have at least 250 characters.
+            Respond ONLY with this JSON structure:
+            { "blocks": [{ "title": "Section Title", "text": "Section Content", "imagePrompt": "Detailed English prompt for image generation" }] }`;
 
             try {
                 const data = await askAI(prompt);
@@ -209,29 +217,25 @@
                     content.appendChild(block);
 
                     generateImage(b.imagePrompt).then(url => {
-                        imgPlaceholder.innerHTML = `<img src="${url}" class="w-full h-full object-cover transition-opacity duration-700 opacity-0" onload="this.style.opacity='1'" alt="візуалізація">`;
+                        imgPlaceholder.innerHTML = `<img src="${url}" class="w-full h-full object-cover transition-opacity duration-700 opacity-0" onload="this.style.opacity='1'" alt="ілюстрація">`;
+                    }).catch(() => {
+                        imgPlaceholder.innerHTML = `<div class="text-slate-500 text-sm">Картинка не прогрузилась</div>`;
                     });
                 });
             } catch (e) {
-                const errBox = document.getElementById('lecture-error-box');
-                errBox.innerText = `Помилка: ${e.message}`;
-                errBox.classList.remove('hidden');
-                document.getElementById('lecture-status').innerText = "Не вдалося завантажити лекцію.";
-                document.getElementById('retry-lecture-btn').classList.remove('hidden');
-                document.querySelector('#lecture-loading .loader').classList.add('hidden');
+                showError('lecture', e.message);
             }
         }
 
         async function generateImage(p) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
-            try {
-                const r = await fetch(url, {
-                    method: 'POST',
-                    body: JSON.stringify({ instances: { prompt: `${p}, high quality educational illustration, 4k` } })
-                });
-                const d = await r.json();
-                return `data:image/png;base64,${d.predictions[0].bytesBase64Encoded}`;
-            } catch { return "https://images.unsplash.com/photo-1454165833767-131f72602f80?q=80&w=800"; }
+            const r = await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify({ instances: { prompt: `${p}, 4k, cinematic lighting, educational concept art` } })
+            });
+            if (!r.ok) throw new Error();
+            const d = await r.json();
+            return `data:image/png;base64,${d.predictions[0].bytesBase64Encoded}`;
         }
 
         window.loadTest = async () => {
@@ -240,14 +244,20 @@
             document.getElementById('retry-test-btn').classList.add('hidden');
             document.getElementById('test-error-box').classList.add('hidden');
             document.getElementById('test-status').innerText = "Створюю питання для геніїв...";
+            document.querySelector('#test-loading .loader').classList.remove('hidden');
 
-            const prompt = `Create a multiple-choice test in Ukrainian with 16 questions on the topic "${currentTopic}" (Subject: ${currentSubject}). 
-            Each question must have 4 options and 1 correct answer (0-indexed). 
-            Format: JSON { "questions": [{ "q": "string", "options": ["string", "string", "string", "string"], "correct": number }] }`;
+            const prompt = `Create a hard multiple-choice test in Ukrainian.
+            Subject: ${currentSubject}
+            Topic: ${currentTopic}
+            Requirement: Exactly 16 questions. 4 options per question. 
+            Respond ONLY with this JSON structure:
+            { "questions": [{ "q": "Question text", "options": ["A", "B", "C", "D"], "correct": 0 }] }`;
 
             try {
                 const data = await askAI(prompt, true);
                 testData = data.questions;
+                if (!testData || testData.length === 0) throw new Error("Порожній список питань");
+                
                 currentQuestionIdx = 0;
                 score = 0;
                 document.getElementById('test-loading').classList.add('hidden');
@@ -255,14 +265,22 @@
                 renderQuestion();
                 startTimer();
             } catch (e) {
-                const errBox = document.getElementById('test-error-box');
-                errBox.innerText = `Помилка: ${e.message}`;
-                errBox.classList.remove('hidden');
-                document.getElementById('test-status').innerText = "Помилка генерації тесту.";
-                document.getElementById('retry-test-btn').classList.remove('hidden');
-                document.querySelector('#test-loading .loader').classList.add('hidden');
+                showError('test', e.message);
             }
         };
+
+        function showError(type, msg) {
+            const box = document.getElementById(`${type}-error-box`);
+            const status = document.getElementById(`${type}-status`);
+            const retry = document.getElementById(`retry-${type}-btn`);
+            const loader = document.querySelector(`#${type}-loading .loader`);
+
+            box.innerText = `Пиздець стався: ${msg}`;
+            box.classList.remove('hidden');
+            status.innerText = "Щось пішло не так.";
+            retry.classList.remove('hidden');
+            if (loader) loader.classList.add('hidden');
+        }
 
         function renderQuestion() {
             isAnswered = false;
