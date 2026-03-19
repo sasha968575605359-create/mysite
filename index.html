@@ -144,7 +144,7 @@
             document.getElementById('lecture-loading').classList.add('hidden');
         };
 
-        async function fetchAI(prompt, retries = 5) {
+        async function fetchAI(prompt, isTest = false, retries = 5) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             
             for (let i = 0; i < retries; i++) {
@@ -156,7 +156,7 @@
                             contents: [{ parts: [{ text: prompt }] }],
                             generationConfig: { 
                                 responseMimeType: "application/json",
-                                temperature: 0.7
+                                temperature: isTest ? 0.2 : 0.7
                             }
                         })
                     });
@@ -166,16 +166,21 @@
                     const data = await response.json();
                     let rawText = data.candidates[0].content.parts[0].text;
                     
-                    // Жесткая очистка от Markdown и лишнего текста
-                    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-                    if (!jsonMatch) throw new Error("No valid JSON found in response");
+                    // Усиленная очистка JSON
+                    const jsonStart = rawText.indexOf('{');
+                    const jsonEnd = rawText.lastIndexOf('}');
                     
-                    return JSON.parse(jsonMatch[0]);
+                    if (jsonStart === -1 || jsonEnd === -1) {
+                        console.error("No JSON found. Raw text:", rawText);
+                        throw new Error("Invalid response format");
+                    }
+                    
+                    const cleanedJson = rawText.substring(jsonStart, jsonEnd + 1);
+                    return JSON.parse(cleanedJson);
                 } catch (err) {
-                    console.error(`Attempt ${i+1} failed:`, err);
+                    console.warn(`Retry ${i+1}/${retries}...`, err);
                     if (i === retries - 1) throw err;
-                    const delay = Math.pow(2, i) * 1000;
-                    await new Promise(res => setTimeout(res, delay));
+                    await new Promise(res => setTimeout(res, Math.pow(2, i) * 1000));
                 }
             }
         }
@@ -185,8 +190,8 @@
             document.getElementById('lecture-loading').classList.remove('hidden');
             document.getElementById('lecture-content').innerHTML = "";
             
-            const prompt = `Напиши подробную и захватывающую лекцию на тему "${currentTopic}" по предмету "${currentSubject}". 
-            Используй понятный язык. Верни ТОЛЬКО JSON: { "blocks": [{ "title": "Заголовок части", "text": "Текст части", "imagePrompt": "Краткое описание для генерации картинки" }] }`;
+            const prompt = `Напиши подробную образовательную лекцию на тему "${currentTopic}" по предмету "${currentSubject}". 
+            Верни ТОЛЬКО JSON: { "blocks": [{ "title": "Заголовок", "text": "Текст", "imagePrompt": "Краткое описание для генерации изображения" }] }`;
 
             try {
                 const data = await fetchAI(prompt);
@@ -204,13 +209,13 @@
                     container.appendChild(blockEl);
 
                     generateImage(block.imagePrompt).then(url => {
-                        imgDiv.innerHTML = `<img src="${url}" class="w-full h-full object-cover transition-opacity duration-500 opacity-0" onload="this.style.opacity='1'" alt="visual">`;
+                        imgDiv.innerHTML = `<img src="${url}" class="w-full h-full object-cover transition-opacity duration-500 opacity-0" onload="this.style.opacity='1'" alt="визуализация">`;
                     });
                 }
                 document.getElementById('lecture-loading').classList.add('hidden');
             } catch (e) {
-                console.error(e);
-                alert("ИИ перегружен. Попробуй другую тему или обнови страницу.");
+                console.error("Lecture Error:", e);
+                alert("Не удалось загрузить лекцию. Попробуй еще раз.");
                 goHome();
             }
         }
@@ -221,7 +226,7 @@
                 const response = await fetch(url, {
                     method: 'POST',
                     body: JSON.stringify({ 
-                        instances: { prompt: `${prompt}, educational 3d render style, high resolution` }, 
+                        instances: { prompt: `${prompt}, educational digital art, detailed` }, 
                         parameters: { sampleCount: 1 } 
                     })
                 });
@@ -236,11 +241,11 @@
             document.getElementById('test-loading').classList.remove('hidden');
             document.getElementById('test-content').classList.add('hidden');
 
-            const prompt = `Создай тест из 16 вопросов на тему "${currentTopic}" (${currentSubject}). 
-            Для каждого вопроса предложи 4 варианта. Верни ТОЛЬКО JSON: { "questions": [{ "q": "Текст вопроса", "options": ["Ответ 1", "Ответ 2", "Ответ 3", "Ответ 4"], "correct": 0 }] }`;
+            const prompt = `Создай учебный тест из 16 вопросов на тему "${currentTopic}" (${currentSubject}). 
+            Для каждого вопроса 4 варианта. Верни ТОЛЬКО JSON: { "questions": [{ "q": "Вопрос", "options": ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"], "correct": 0 }] }`;
 
             try {
-                const data = await fetchAI(prompt);
+                const data = await fetchAI(prompt, true);
                 testData = data.questions;
                 currentQuestionIdx = 0;
                 score = 0;
@@ -248,8 +253,8 @@
                 document.getElementById('test-loading').classList.add('hidden');
                 document.getElementById('test-content').classList.remove('hidden');
             } catch (e) {
-                console.error(e);
-                alert("Не удалось создать тест. Попробуй еще раз.");
+                console.error("Test Generation Error:", e);
+                alert("Ошибка генерации теста. Попробуй упростить тему.");
                 goHome();
             }
         }
@@ -308,7 +313,7 @@
             const correct = testData[currentQuestionIdx].correct;
             const buttons = document.querySelectorAll('.option-btn');
 
-            buttons[correct].classList.add('correct-answer');
+            if (buttons[correct]) buttons[correct].classList.add('correct-answer');
 
             if (selectedIdx === correct) {
                 score++;
