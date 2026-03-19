@@ -126,7 +126,7 @@
 
     <script type="module">
         // ==========================================
-        // МАТБ, ТВОЙ КЛЮЧ ПЕРЕПРОВЕРЕН!
+        // МАТБ, ТВОЙ КЛЮЧ ЗДЕСЬ
         // ==========================================
         const API_KEY = "AIzaSyAr5VqsTgBM7vrk5NbsKjZuudjx-u_g5Ek"; 
         // ==========================================
@@ -148,7 +148,7 @@
             const subject = document.getElementById('subject-select').value;
 
             if (!API_KEY) {
-                showError("Бля, MATB, вставь API Key!");
+                showError("MATB, вставь API Key!");
                 return;
             }
 
@@ -173,8 +173,8 @@
         }
 
         async function fetchAI(prompt, sys) {
-            // Исправленная модель для v1beta
-            const model = "gemini-1.5-flash"; 
+            // Перешли на 2.0-flash, она мощнее и доступнее
+            const model = "gemini-2.0-flash"; 
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
             
             try {
@@ -186,7 +186,7 @@
                         systemInstruction: { parts: [{ text: sys }] },
                         generationConfig: { 
                             responseMimeType: "application/json", 
-                            temperature: 0.7
+                            temperature: 0.8
                         }
                     })
                 });
@@ -209,7 +209,6 @@
             try {
                 const prompt = `Напиши подробную лекцию на русском языке про "${topic}" (Предмет: ${subject}). 
                 Раздели на 3 логических блока. Для каждого блока придумай описание для картинки на английском.
-                Стиль: современный, молодежный, но информативный.
                 JSON формат: { "blocks": [{ "title": "Заголовок", "text": "Текст", "imgPrompt": "English image description" }] }`;
                 
                 const data = await fetchAI(prompt, "Ты крутой преподаватель. Объясняешь сложные вещи просто. Обращаешься на 'ты'.");
@@ -229,7 +228,6 @@
                         <div class="rounded-3xl overflow-hidden bg-white/5 aspect-video flex flex-col items-center justify-center border border-white/5 text-slate-500 p-4 text-center">
                             <span class="text-4xl mb-2">🖼️</span>
                             <p class="text-xs uppercase tracking-widest font-bold">Визуализация: ${block.imgPrompt}</p>
-                            <p class="text-[10px] mt-2 text-slate-600">[Здесь должна быть иллюстрация по теме]</p>
                         </div>
                     `;
                     resultArea.appendChild(el);
@@ -244,7 +242,7 @@
                 const prompt = `Создай тест из 10 вопросов на русском языке по теме "${topic}" (${subject}).
                 JSON формат: { "questions": [{ "q": "Вопрос", "options": ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"], "correct": 0 }] }`;
                 
-                const data = await fetchAI(prompt, "Ты эксперт-экзаменатор. Делаешь интересные вопросы.");
+                const data = await fetchAI(prompt, "Ты эксперт-экзаменатор.");
                 testQuestions = data.questions;
                 
                 loadingState.classList.add('hidden');
@@ -254,7 +252,7 @@
                 score = 0;
                 renderQuestion();
             } catch (e) {
-                showError("Ошибка при создании теста: " + e.message);
+                showError("Ошибка: " + e.message);
             }
         }
 
@@ -264,7 +262,7 @@
                 <div class="question-card">
                     <div class="flex justify-between text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest">
                         <span>Вопрос ${currentIdx + 1} / ${testQuestions.length}</span>
-                        <span class="text-purple-400">Правильно: ${score}</span>
+                        <span class="text-purple-400">Верно: ${score}</span>
                     </div>
                     <h2 class="text-2xl font-bold mb-8 text-white">${q.q}</h2>
                     <div id="options" class="grid grid-cols-1 gap-3"></div>
@@ -305,11 +303,9 @@
             resultArea.innerHTML = `
                 <div class="text-center py-10 question-card">
                     <div class="text-6xl mb-6">🎓</div>
-                    <h2 class="heading text-4xl font-bold mb-4">Результат</h2>
-                    <p class="text-slate-400 text-xl mb-10">Ты набрал <span class="text-purple-400 font-bold">${score}</span> баллов из ${testQuestions.length}</p>
-                    <div class="flex flex-col gap-3">
-                        <button onclick="window.location.reload()" class="btn-primary px-10 py-4 rounded-2xl font-bold">К новым темам</button>
-                    </div>
+                    <h2 class="heading text-4xl font-bold mb-4">Готово!</h2>
+                    <p class="text-slate-400 text-xl mb-10">Твой результат: <span class="text-purple-400 font-bold">${score}</span> из ${testQuestions.length}</p>
+                    <button onclick="window.location.reload()" class="btn-primary px-10 py-4 rounded-2xl font-bold">Выбрать другую тему</button>
                 </div>
             `;
         }
