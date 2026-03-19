@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой Учебный Хаб</title>
+    <style>
+        body { background: #121212; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #1e1e1e; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 400px; }
+        select, input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #252525; color: white; box-sizing: border-box; }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-lecture { background: #4caf50; color: white; }
+        .btn-quiz { background: #2196f3; color: white; }
+        button:hover { opacity: 0.8; transform: translateY(-2px); }
+        h1 { font-size: 24px; margin-bottom: 20px; color: #bb86fc; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Твой Учитель</h1>
+    
+    <label>Выбери предмет (НУШ):</label>
+    <select id="subject">
+        <option value="ukr-lang">Українська мова</option>
+        <option value="math">Математика (Алгебра/Геометрія)</option>
+        <option value="history">Історія України</option>
+        <option value="biology">Біологія</option>
+        <option value="physics">Фізика</option>
+        <option value="eng">Англійська мова</option>
+    </select>
+
+    <label>Введите тему:</label>
+    <input type="text" id="topic" placeholder="Например: Квантовая физика или Дроби">
+
+    <div class="btn-group">
+        <button class="btn-lecture" onclick="start('lecture')">Читать лекцию</button>
+        <button class="btn-quiz" onclick="start('quiz')">Пройти тест</button>
+    </div>
+</div>
+
+<script>
+    function start(type) {
+        const subject = document.getElementById('subject').value;
+        const topic = document.getElementById('topic').value;
+        
+        if (!topic) {
+            alert("Сначала введи тему, не тупи!");
+            return;
+        }
+
+        // Сохраняем данные для следующей страницы
+        localStorage.setItem('currentSubject', subject);
+        localStorage.setItem('currentTopic', topic);
+
+        // Перенаправляем
+        if (type === 'lecture') {
+            window.location.href = 'lecture.html';
+        } else {
+            window.location.href = 'quiz.html';
+        }
+    }
+</script>
+
+</body>
+</html>
