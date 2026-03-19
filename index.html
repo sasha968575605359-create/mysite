@@ -14,12 +14,11 @@
         .loader { border: 4px solid rgba(255, 255, 255, 0.1); border-left-color: #818cf8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        .correct-answer { background-color: rgba(34, 197, 94, 0.2) !important; border-color: #22c55e !important; color: #4ade80 !important; }
-        .wrong-answer { background-color: rgba(239, 68, 68, 0.2) !important; border-color: #ef4444 !important; color: #f87171 !important; }
+        .option-btn.correct { background-color: rgba(34, 197, 94, 0.2) !important; border-color: #22c55e !important; color: #4ade80 !important; }
+        .option-btn.wrong { background-color: rgba(239, 68, 68, 0.2) !important; border-color: #ef4444 !important; color: #f87171 !important; }
         
-        /* Smooth transitions */
-        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -27,11 +26,11 @@
     <!-- Главный экран -->
     <div id="main-screen" class="glass p-8 rounded-3xl w-full max-w-md shadow-2xl transition-all fade-in">
         <h1 class="text-4xl font-bold mb-6 text-center gradient-text">Study AI</h1>
-        <p class="text-slate-400 text-center mb-8">Выбери предмет и тему, чтобы начать разнос в учебе.</p>
+        <p class="text-slate-400 text-center mb-8">Выбери предмет и тему. Я подготовлю всё за пару секунд.</p>
         
         <div class="space-y-4">
             <div>
-                <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Предмет (НУШ)</label>
+                <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Предмет</label>
                 <select id="subject" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
                     <option value="Математика">Математика</option>
                     <option value="Алгебра">Алгебра</option>
@@ -45,59 +44,55 @@
                     <option value="Біологія і екологія">Біологія і екологія</option>
                     <option value="Географія">Географія</option>
                     <option value="Фізика">Фізика</option>
-                    <option value="Астрономія">Астрономія</option>
                     <option value="Хімія">Хімія</option>
                     <option value="Інформатика">Інформатика</option>
-                    <option value="Правознавство">Правознавство</option>
-                    <option value="Мистецтво">Мистецтво</option>
-                    <option value="Основи здоров'я">Основи здоров'я</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Тема лекции/теста</label>
-                <input type="text" id="topic" placeholder="Напр: Теорема Пифагора" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Конкретная тема</label>
+                <input type="text" id="topic" placeholder="Напр: Законы Ньютона" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
 
             <div class="grid grid-cols-2 gap-4 mt-8">
-                <button onclick="startSession('lecture')" class="bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-indigo-500/20">📖 Лекция</button>
-                <button onclick="startSession('test')" class="bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/20">📝 Тест</button>
+                <button onclick="startSession('lecture')" class="bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 active:scale-95">📖 Лекция</button>
+                <button onclick="startSession('test')" class="bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-bold transition-all shadow-lg shadow-purple-500/20 active:scale-95">📝 Тест</button>
             </div>
         </div>
     </div>
 
-    <!-- Экран лекции -->
+    <!-- Лекция -->
     <div id="lecture-screen" class="hidden w-full max-w-4xl space-y-6 fade-in">
-        <button onclick="goHome()" class="text-slate-400 hover:text-white transition-colors">← На главную</button>
+        <button onclick="goHome()" class="text-slate-400 hover:text-white transition-colors">← Назад</button>
         <div class="glass p-8 rounded-3xl">
             <h2 id="lecture-title" class="text-3xl font-bold mb-6 gradient-text"></h2>
             <div id="lecture-loading" class="flex flex-col items-center py-20">
                 <div class="loader mb-4"></div>
-                <p>ИИ пишет интересную лекцию и рисует картинки...</p>
+                <p class="text-slate-400">Генерирую глубокий материал...</p>
             </div>
-            <div id="lecture-content" class="prose prose-invert max-w-none space-y-8"></div>
+            <div id="lecture-content" class="space-y-10"></div>
         </div>
     </div>
 
-    <!-- Экран теста -->
+    <!-- Тест -->
     <div id="test-screen" class="hidden w-full max-w-2xl fade-in">
         <div class="flex justify-between items-center mb-6">
-            <button onclick="goHome()" class="text-slate-400 hover:text-white">← Сдаться</button>
+            <button onclick="goHome()" class="text-slate-400 hover:text-white">← Прервать</button>
             <div id="timer" class="bg-red-500/20 text-red-400 px-4 py-2 rounded-full font-mono font-bold border border-red-500/30">10:00</div>
         </div>
-        <div class="glass p-8 rounded-3xl">
-            <div id="test-loading" class="flex flex-col items-center py-20">
+        <div class="glass p-8 rounded-3xl min-h-[400px] flex flex-col">
+            <div id="test-loading" class="flex flex-col items-center justify-center flex-grow py-20">
                 <div class="loader mb-4"></div>
-                <p>ИИ придумывает сложные вопросы...</p>
+                <p class="text-slate-400">Создаю уникальные вопросы...</p>
             </div>
             <div id="test-content" class="hidden">
-                <div class="flex justify-between text-sm text-slate-400 mb-4">
-                    <span id="question-index">Вопрос 1 из 16</span>
-                    <span id="score-display">Баллы: 0</span>
+                <div class="flex justify-between text-sm text-slate-400 mb-6">
+                    <span id="question-index">Вопрос 1/16</span>
+                    <span id="score-display">Успех: 0</span>
                 </div>
-                <h3 id="question-text" class="text-2xl font-semibold mb-8"></h3>
-                <div id="options-container" class="grid grid-cols-1 gap-4"></div>
-                <button id="next-btn" onclick="nextQuestion()" class="hidden w-full mt-8 bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20">Далее →</button>
+                <h3 id="question-text" class="text-2xl font-semibold mb-8 leading-tight"></h3>
+                <div id="options-container" class="grid grid-cols-1 gap-3"></div>
+                <button id="next-btn" onclick="nextQuestion()" class="hidden w-full mt-8 bg-indigo-600 py-4 rounded-xl font-bold transition-all shadow-lg">Продолжить</button>
             </div>
         </div>
     </div>
@@ -107,238 +102,202 @@
 
         let currentSubject = "";
         let currentTopic = "";
-        let timerInterval = null;
         let testData = [];
         let currentQuestionIdx = 0;
         let score = 0;
         let isAnswered = false;
+        let timerVal = 600;
+        let timerInt = null;
 
-        window.startSession = async (type) => {
-            currentSubject = document.getElementById('subject').value;
-            currentTopic = document.getElementById('topic').value.trim();
-
-            if (!currentTopic) {
-                alert("Введи тему, MATB!");
-                return;
+        // Помощник для извлечения JSON из текста
+        function extractJSON(text) {
+            try {
+                const start = text.indexOf('{');
+                const end = text.lastIndexOf('}');
+                if (start === -1 || end === -1) return null;
+                return JSON.parse(text.substring(start, end + 1));
+            } catch (e) {
+                console.error("JSON Parse Error:", e, "Raw text:", text);
+                return null;
             }
+        }
 
-            document.getElementById('main-screen').classList.add('hidden');
-            
-            if (type === 'lecture') {
-                document.getElementById('lecture-screen').classList.remove('hidden');
-                generateLecture();
-            } else {
-                document.getElementById('test-screen').classList.remove('hidden');
-                generateTest();
-            }
-        };
-
-        window.goHome = () => {
-            clearInterval(timerInterval);
-            document.getElementById('main-screen').classList.remove('hidden');
-            document.getElementById('lecture-screen').classList.add('hidden');
-            document.getElementById('test-screen').classList.add('hidden');
-            document.getElementById('lecture-content').innerHTML = "";
-            document.getElementById('test-content').classList.add('hidden');
-            document.getElementById('test-loading').classList.add('hidden');
-            document.getElementById('lecture-loading').classList.add('hidden');
-        };
-
-        async function fetchAI(prompt, isTest = false, retries = 5) {
+        async function callAI(prompt, isTest = false) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             
-            for (let i = 0; i < retries; i++) {
+            for (let attempt = 0; attempt < 3; attempt++) {
                 try {
-                    const response = await fetch(url, {
+                    const resp = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{ parts: [{ text: prompt }] }],
                             generationConfig: { 
-                                responseMimeType: "application/json",
-                                temperature: isTest ? 0.2 : 0.7
+                                temperature: isTest ? 0.3 : 0.7,
+                                responseMimeType: "application/json"
                             }
                         })
                     });
 
-                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
-                    const data = await response.json();
-                    let rawText = data.candidates[0].content.parts[0].text;
-                    
-                    // Усиленная очистка JSON
-                    const jsonStart = rawText.indexOf('{');
-                    const jsonEnd = rawText.lastIndexOf('}');
-                    
-                    if (jsonStart === -1 || jsonEnd === -1) {
-                        console.error("No JSON found. Raw text:", rawText);
-                        throw new Error("Invalid response format");
-                    }
-                    
-                    const cleanedJson = rawText.substring(jsonStart, jsonEnd + 1);
-                    return JSON.parse(cleanedJson);
-                } catch (err) {
-                    console.warn(`Retry ${i+1}/${retries}...`, err);
-                    if (i === retries - 1) throw err;
-                    await new Promise(res => setTimeout(res, Math.pow(2, i) * 1000));
+                    if (!resp.ok) throw new Error("API Error");
+                    const data = await resp.json();
+                    const result = extractJSON(data.candidates[0].content.parts[0].text);
+                    if (result) return result;
+                } catch (e) {
+                    await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
                 }
             }
+            throw new Error("Не удалось получить данные от ИИ");
         }
 
-        async function generateLecture() {
+        window.startSession = (type) => {
+            currentSubject = document.getElementById('subject').value;
+            currentTopic = document.getElementById('topic').value.trim();
+            if (!currentTopic) return alert("Введите тему!");
+
+            document.getElementById('main-screen').classList.add('hidden');
+            if (type === 'lecture') {
+                document.getElementById('lecture-screen').classList.remove('hidden');
+                loadLecture();
+            } else {
+                document.getElementById('test-screen').classList.remove('hidden');
+                loadTest();
+            }
+        };
+
+        async function loadLecture() {
             document.getElementById('lecture-title').innerText = currentTopic;
             document.getElementById('lecture-loading').classList.remove('hidden');
-            document.getElementById('lecture-content').innerHTML = "";
-            
-            const prompt = `Напиши подробную образовательную лекцию на тему "${currentTopic}" по предмету "${currentSubject}". 
-            Верни ТОЛЬКО JSON: { "blocks": [{ "title": "Заголовок", "text": "Текст", "imagePrompt": "Краткое описание для генерации изображения" }] }`;
+            const content = document.getElementById('lecture-content');
+            content.innerHTML = "";
+
+            const prompt = `Действуй как профессиональный учитель. Напиши подробную лекцию по теме "${currentTopic}" (предмет: ${currentSubject}). 
+            Разбей на 4-5 логических блоков. Для каждого блока придумай описание картинки (imagePrompt).
+            Формат: { "blocks": [{ "title": "Заголовок", "text": "Текст", "imagePrompt": "описание для нейросети" }] }`;
 
             try {
-                const data = await fetchAI(prompt);
-                const container = document.getElementById('lecture-content');
+                const data = await callAI(prompt);
+                document.getElementById('lecture-loading').classList.add('hidden');
                 
-                for (let block of data.blocks) {
-                    const blockEl = document.createElement('div');
-                    blockEl.className = "space-y-4 fade-in";
-                    blockEl.innerHTML = `<h3 class="text-2xl font-bold text-indigo-300">${block.title}</h3><p class="text-slate-300 text-lg leading-relaxed">${block.text}</p>`;
+                for (let b of data.blocks) {
+                    const div = document.createElement('div');
+                    div.className = "fade-in space-y-4";
+                    div.innerHTML = `<h3 class="text-2xl font-bold text-indigo-300">${b.title}</h3><p class="text-slate-300 text-lg leading-relaxed">${b.text}</p>`;
                     
-                    const imgDiv = document.createElement('div');
-                    imgDiv.className = "w-full aspect-video rounded-2xl bg-slate-800/50 flex items-center justify-center overflow-hidden border border-slate-700 relative";
-                    imgDiv.innerHTML = `<div class="loader"></div>`;
-                    blockEl.appendChild(imgDiv);
-                    container.appendChild(blockEl);
+                    const imgBox = document.createElement('div');
+                    imgBox.className = "w-full aspect-video rounded-2xl bg-slate-800/40 border border-white/5 flex items-center justify-center overflow-hidden";
+                    imgBox.innerHTML = '<div class="loader"></div>';
+                    div.appendChild(imgBox);
+                    content.appendChild(div);
 
-                    generateImage(block.imagePrompt).then(url => {
-                        imgDiv.innerHTML = `<img src="${url}" class="w-full h-full object-cover transition-opacity duration-500 opacity-0" onload="this.style.opacity='1'" alt="визуализация">`;
+                    generateImg(b.imagePrompt).then(url => {
+                        imgBox.innerHTML = `<img src="${url}" class="w-full h-full object-cover" alt="иллюстрация">`;
                     });
                 }
-                document.getElementById('lecture-loading').classList.add('hidden');
             } catch (e) {
-                console.error("Lecture Error:", e);
-                alert("Не удалось загрузить лекцию. Попробуй еще раз.");
+                alert("Ошибка связи. Попробуй еще раз.");
                 goHome();
             }
         }
 
-        async function generateImage(prompt) {
+        async function generateImg(p) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
             try {
-                const response = await fetch(url, {
+                const r = await fetch(url, {
                     method: 'POST',
-                    body: JSON.stringify({ 
-                        instances: { prompt: `${prompt}, educational digital art, detailed` }, 
-                        parameters: { sampleCount: 1 } 
-                    })
+                    body: JSON.stringify({ instances: { prompt: `${p}, educational style, high quality` } })
                 });
-                const data = await response.json();
-                return `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`;
-            } catch (e) {
-                return "https://images.unsplash.com/photo-1454165833767-131f72602f80?q=80&w=800&auto=format&fit=crop";
-            }
+                const d = await r.json();
+                return `data:image/png;base64,${d.predictions[0].bytesBase64Encoded}`;
+            } catch { return "https://images.unsplash.com/photo-1532012197367-2d12638847ad?q=80&w=800"; }
         }
 
-        async function generateTest() {
-            document.getElementById('test-loading').classList.remove('hidden');
-            document.getElementById('test-content').classList.add('hidden');
-
-            const prompt = `Создай учебный тест из 16 вопросов на тему "${currentTopic}" (${currentSubject}). 
-            Для каждого вопроса 4 варианта. Верни ТОЛЬКО JSON: { "questions": [{ "q": "Вопрос", "options": ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"], "correct": 0 }] }`;
+        async function loadTest() {
+            const prompt = `Создай тест из 16 вопросов по теме "${currentTopic}" (предмет: ${currentSubject}). 
+            Один правильный ответ. Формат: { "questions": [{ "q": "Вопрос", "options": ["А", "Б", "В", "Г"], "correct": 0 }] }`;
 
             try {
-                const data = await fetchAI(prompt, true);
+                const data = await callAI(prompt, true);
                 testData = data.questions;
                 currentQuestionIdx = 0;
                 score = 0;
-                showQuestion();
                 document.getElementById('test-loading').classList.add('hidden');
                 document.getElementById('test-content').classList.remove('hidden');
+                renderQuestion();
+                startTimer();
             } catch (e) {
-                console.error("Test Generation Error:", e);
-                alert("Ошибка генерации теста. Попробуй упростить тему.");
+                alert("Не удалось создать тест. Попробуй другую тему.");
                 goHome();
             }
         }
 
-        function showQuestion() {
-            if (currentQuestionIdx >= testData.length) {
-                finishTest();
-                return;
-            }
-
+        function renderQuestion() {
             isAnswered = false;
             document.getElementById('next-btn').classList.add('hidden');
-            
             const q = testData[currentQuestionIdx];
-            document.getElementById('question-index').innerText = `Вопрос ${currentQuestionIdx + 1} из ${testData.length}`;
-            document.getElementById('score-display').innerText = `Баллы: ${score}`;
+            document.getElementById('question-index').innerText = `Вопрос ${currentQuestionIdx + 1}/${testData.length}`;
             document.getElementById('question-text').innerText = q.q;
             
             const container = document.getElementById('options-container');
             container.innerHTML = "";
-
-            q.options.forEach((opt, idx) => {
-                const btn = document.createElement('button');
-                btn.className = "option-btn w-full text-left p-4 rounded-xl bg-slate-800 border border-slate-700 hover:border-indigo-500 transition-all hover:bg-slate-700 active:scale-[0.98]";
-                btn.innerText = opt;
-                btn.onclick = () => checkAnswer(idx, btn);
-                container.appendChild(btn);
+            q.options.forEach((opt, i) => {
+                const b = document.createElement('button');
+                b.className = "option-btn w-full text-left p-4 rounded-xl bg-slate-800/60 border border-white/10 hover:border-indigo-500/50 transition-all active:scale-[0.98]";
+                b.innerText = opt;
+                b.onclick = () => selectOption(i, b);
+                container.appendChild(b);
             });
-
-            startTimer();
         }
 
-        function startTimer() {
-            clearInterval(timerInterval);
-            let timeLeft = 600; 
-            const timerEl = document.getElementById('timer');
-            const updateUI = () => {
-                const mins = Math.floor(timeLeft / 60);
-                const secs = timeLeft % 60;
-                timerEl.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    if (!isAnswered) checkAnswer(-1, null);
-                }
-                timeLeft--;
-            };
-            updateUI();
-            timerInterval = setInterval(updateUI, 1000);
-        }
-
-        function checkAnswer(selectedIdx, btn) {
+        function selectOption(idx, btn) {
             if (isAnswered) return;
             isAnswered = true;
-            clearInterval(timerInterval);
-            
             const correct = testData[currentQuestionIdx].correct;
-            const buttons = document.querySelectorAll('.option-btn');
-
-            if (buttons[correct]) buttons[correct].classList.add('correct-answer');
-
-            if (selectedIdx === correct) {
+            const all = document.querySelectorAll('.option-btn');
+            
+            all[correct].classList.add('correct');
+            if (idx === correct) {
                 score++;
-            } else if (selectedIdx !== -1 && btn) {
-                btn.classList.add('wrong-answer');
+            } else {
+                btn.classList.add('wrong');
             }
-
+            document.getElementById('score-display').innerText = `Успех: ${score}`;
             document.getElementById('next-btn').classList.remove('hidden');
         }
 
         window.nextQuestion = () => {
             currentQuestionIdx++;
-            showQuestion();
+            if (currentQuestionIdx < testData.length) renderQuestion();
+            else finish();
         };
 
-        function finishTest() {
-            const container = document.getElementById('test-content');
-            container.innerHTML = `
+        function startTimer() {
+            clearInterval(timerInt);
+            timerVal = 600;
+            timerInt = setInterval(() => {
+                timerVal--;
+                const m = Math.floor(timerVal/60), s = timerVal%60;
+                document.getElementById('timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+                if (timerVal <= 0) finish();
+            }, 1000);
+        }
+
+        function finish() {
+            clearInterval(timerInt);
+            const content = document.getElementById('test-content');
+            content.innerHTML = `
                 <div class="text-center py-10 fade-in">
-                    <h2 class="text-4xl font-bold mb-4 gradient-text">Тест окончен!</h2>
-                    <p class="text-2xl mb-8 text-slate-300">Твой результат: <span class="text-indigo-400 font-bold">${score} / ${testData.length}</span></p>
-                    <button onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 active:scale-95">Вернуться в начало</button>
+                    <h2 class="text-4xl font-bold mb-4 gradient-text">Готово!</h2>
+                    <p class="text-xl text-slate-400 mb-8">Результат: <span class="text-white font-bold">${score} из ${testData.length}</span></p>
+                    <button onclick="goHome()" class="bg-indigo-600 px-10 py-4 rounded-xl font-bold shadow-lg shadow-indigo-500/20 active:scale-95">На главную</button>
                 </div>
             `;
         }
+
+        window.goHome = () => {
+            clearInterval(timerInt);
+            location.reload(); // Простой способ сбросить состояние
+        };
     </script>
 </body>
 </html>
