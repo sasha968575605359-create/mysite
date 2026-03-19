@@ -1,338 +1,285 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Study Hub - Твій препод</title>
+    <title>AI Study Hub - Твой личный препод</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .gradient-text { background: linear-gradient(90deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+        
+        :root {
+            --bg: #050505;
+            --accent: #8b5cf6;
+            --glass: rgba(20, 20, 20, 0.8);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg); 
+            color: #e2e8f0; 
+            background-image: radial-gradient(circle at 50% -20%, #1e1b4b, transparent);
+        }
+
+        .heading { font-family: 'Unbounded', sans-serif; }
+        .glass-panel { 
+            background: var(--glass); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(168, 85, 247, 0.4); }
+
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #a855f7;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        select option { background: #1a1a1a; }
+        
+        .question-card { animation: slideIn 0.4s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .hidden { display: none; }
-        .loader { border: 4px solid rgba(255, 255, 255, 0.1); border-left-color: #818cf8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .option-btn { transition: all 0.2s ease; border: 1px solid rgba(255,255,255,0.05); }
-        .option-btn:hover { background: rgba(255,255,255,0.05); transform: translateX(4px); }
-        .option-btn.correct { background-color: rgba(34, 197, 94, 0.2) !important; border-color: #22c55e !important; color: #4ade80 !important; }
-        .option-btn.wrong { background-color: rgba(239, 68, 68, 0.2) !important; border-color: #ef4444 !important; color: #f87171 !important; }
-        
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .error-msg { color: #f87171; background: rgba(239, 68, 68, 0.1); padding: 1.5rem; border-radius: 1rem; border: 1px solid rgba(239, 68, 68, 0.2); margin-top: 1rem; font-size: 0.9rem; line-height: 1.5; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-6">
 
-    <!-- Головний екран -->
-    <div id="main-screen" class="glass p-8 rounded-3xl w-full max-w-md shadow-2xl transition-all fade-in">
-        <h1 class="text-4xl font-bold mb-2 text-center gradient-text">Study AI</h1>
-        <p class="text-slate-400 text-center mb-8 text-sm">Твій персональний вчитель, MATB.</p>
-        
-        <div class="space-y-4">
-            <div id="api-warning" class="hidden text-xs text-red-400 bg-red-400/10 p-3 rounded-xl border border-red-400/20 mb-4">
-                <b>Помилка:</b> API Key порожній! Встав ключ із Google AI Studio в код (рядок 126), інакше нічого не запрацює.
-            </div>
+    <!-- Главный экран -->
+    <div id="setup-screen" class="glass-panel p-8 rounded-[2rem] w-full max-w-lg transition-all">
+        <div class="text-center mb-10">
+            <h1 class="heading text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 mb-2">STUDY AI</h1>
+            <p class="text-slate-500 text-sm">Выбери предмет и начни разнос в учебе, MATB.</p>
+        </div>
 
+        <div class="space-y-6">
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider mb-2 ml-1 text-slate-500">Предмет</label>
-                <select id="subject" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer">
-                    <option value="Математика">Математика</option>
-                    <option value="Алгебра">Алгебра</option>
-                    <option value="Українська мова">Українська мова</option>
-                    <option value="Українська література">Українська література</option>
-                    <option value="Історія України">Історія України</option>
-                    <option value="Фізика">Фізика</option>
-                    <option value="Біологія">Біологія</option>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Предмет</label>
+                <select id="subject-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-purple-500 transition-colors cursor-pointer text-lg">
+                    <option value="Математика">📐 Математика</option>
+                    <option value="Алгебра">🔢 Алгебра</option>
+                    <option value="Геометрия">📏 Геометрия</option>
+                    <option value="Физика">⚡ Физика</option>
+                    <option value="Химия">🧪 Химия</option>
+                    <option value="Биология">🌿 Биология</option>
+                    <option value="Информатика">💻 Информатика</option>
+                    <option value="История">📜 История</option>
+                    <option value="География">🌍 География</option>
+                    <option value="Литература">📚 Литература</option>
+                    <option value="Украинский язык">🇺🇦 Украинский язык</option>
+                    <option value="Английский язык">🇬🇧 Английский язык</option>
+                    <option value="Правоведение">⚖️ Правоведение</option>
+                    <option value="Экономика">📈 Экономика</option>
+                    <option value="Астрономия">🔭 Астрономия</option>
+                    <option value="Искусство">🎨 Искусство</option>
+                    <option value="Психология">🧠 Психология</option>
+                    <option value="Философия">🤔 Философия</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider mb-2 ml-1 text-slate-500">Тема</label>
-                <input type="text" id="topic" placeholder="Напр: Квадратні рівняння" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Тема занятия</label>
+                <input type="text" id="topic-input" placeholder="Напр: Теорема Пифагора" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-purple-500 transition-all text-lg">
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mt-8">
-                <button onclick="startSession('lecture')" class="bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95 flex flex-col items-center">
-                    <span class="text-xl">📖</span>
-                    <span class="text-sm">Лекція</span>
+            <div class="grid grid-cols-2 gap-4 pt-4">
+                <button onclick="initSession('lecture')" class="btn-primary p-5 rounded-2xl font-bold flex flex-col items-center gap-2">
+                    <span class="text-2xl">📖</span>
+                    <span>Лекция</span>
                 </button>
-                <button onclick="startSession('test')" class="bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95 flex flex-col items-center">
-                    <span class="text-xl">📝</span>
-                    <span class="text-sm">Тест</span>
+                <button onclick="initSession('test')" class="btn-primary p-5 rounded-2xl font-bold flex flex-col items-center gap-2">
+                    <span class="text-2xl">📝</span>
+                    <span>Тест</span>
                 </button>
             </div>
+        </div>
+        
+        <div id="api-error" class="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs hidden">
+            Ошибка: Не забудь вставить API Key в код!
         </div>
     </div>
 
-    <!-- Екран Лекції -->
-    <div id="lecture-screen" class="hidden w-full max-w-4xl space-y-6 fade-in">
-        <button onclick="goHome()" class="text-slate-400 hover:text-white transition-colors flex items-center gap-2">
-            <span>← На головну</span>
-        </button>
-        <div class="glass p-8 rounded-3xl">
-            <h2 id="lecture-title" class="text-3xl font-bold mb-6 gradient-text"></h2>
-            <div id="lecture-loading" class="flex flex-col items-center py-20">
-                <div class="loader mb-4"></div>
-                <p id="lecture-status" class="text-slate-400 text-center italic">Інтелект завантажує знання...</p>
-                <div id="lecture-error-box" class="hidden error-msg"></div>
-            </div>
-            <div id="lecture-content" class="space-y-12"></div>
+    <!-- Экран Контента -->
+    <div id="content-screen" class="hidden w-full max-w-4xl glass-panel p-8 rounded-[2rem] min-h-[600px] flex flex-col">
+        <div class="flex justify-between items-center mb-8">
+            <button onclick="window.location.reload()" class="text-slate-500 hover:text-white transition-colors">← Назад</button>
+            <div id="status-badge" class="px-4 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-bold border border-purple-500/20">ГОТОВЛЮ...</div>
         </div>
-    </div>
 
-    <!-- Екран Тесту -->
-    <div id="test-screen" class="hidden w-full max-w-2xl fade-in">
-        <div class="flex justify-between items-center mb-6">
-            <button onclick="goHome()" class="text-slate-400 hover:text-white">← Вийти</button>
-            <div id="timer" class="bg-slate-800 px-4 py-2 rounded-full font-mono font-bold border border-slate-700">10:00</div>
+        <div id="loading-state" class="flex-grow flex flex-col items-center justify-center space-y-4">
+            <div class="loader"></div>
+            <p class="text-slate-400 animate-pulse text-sm">ИИ генерирует контент...</p>
         </div>
-        <div class="glass p-8 rounded-3xl min-h-[450px] flex flex-col">
-            <div id="test-loading" class="flex flex-col items-center justify-center flex-grow py-20">
-                <div class="loader mb-4"></div>
-                <p id="test-status" class="text-slate-400 text-center">Генерую підступні питання...</p>
-                <div id="test-error-box" class="hidden error-msg"></div>
-            </div>
-            <div id="test-content" class="hidden">
-                <div class="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-500 mb-6">
-                    <span id="question-index">Питання 1/16</span>
-                    <span id="score-display" class="text-indigo-400">Рахунок: 0</span>
-                </div>
-                <h3 id="question-text" class="text-2xl font-semibold mb-8 leading-tight"></h3>
-                <div id="options-container" class="grid grid-cols-1 gap-3"></div>
-                <button id="next-btn" onclick="nextQuestion()" class="hidden w-full mt-8 bg-indigo-600 py-4 rounded-xl font-bold shadow-lg hover:bg-indigo-500 transition-all">Наступне питання →</button>
-            </div>
+
+        <div id="result-area" class="hidden space-y-8 pb-10">
+            <!-- Сюда вставляется лекция или тест -->
         </div>
     </div>
 
     <script type="module">
         // ==========================================
-        // МАТБ, ВСТАВ СВІЙ API KEY НИЖЧЕ!
-        // Перепиши пусті лапки ключем з image_d1e584.png
+        // МАТБ, ТВОЙ КЛЮЧ ВСТАВЛЕН!
         // ==========================================
-        const apiKey = "AIzaSyAr5VqsTgBM7vrk5NbsKjZuudjx-u_g5Ek"; 
+        const API_KEY = "AIzaSyAr5VqsTgBM7vrk5NbsKjZuudjx-u_g5Ek"; 
         // ==========================================
 
-        if (!apiKey) {
-            document.getElementById('api-warning').classList.remove('hidden');
-        }
+        const setupScreen = document.getElementById('setup-screen');
+        const contentScreen = document.getElementById('content-screen');
+        const resultArea = document.getElementById('result-area');
+        const loadingState = document.getElementById('loading-state');
+        const statusBadge = document.getElementById('status-badge');
 
-        let currentSubject = "";
-        let currentTopic = "";
-        let testData = [];
-        let currentQuestionIdx = 0;
+        let testQuestions = [];
+        let currentIdx = 0;
         let score = 0;
-        let isAnswered = false;
-        let timerVal = 600;
-        let timerInt = null;
 
-        async function askAI(prompt, systemPrompt) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        window.initSession = async (mode) => {
+            const topic = document.getElementById('topic-input').value.trim();
+            const subject = document.getElementById('subject-select').value;
+
+            if (!API_KEY) {
+                document.getElementById('api-error').classList.remove('hidden');
+                return;
+            }
+
+            if (!topic) return alert("Бля, MATB, введи тему!");
+
+            setupScreen.classList.add('hidden');
+            contentScreen.classList.remove('hidden');
             
-            try {
-                const resp = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] },
-                        generationConfig: { 
-                            temperature: 0.7,
-                            responseMimeType: "application/json"
-                        }
-                    })
-                });
-                
-                const result = await resp.json();
-                if (!resp.ok) {
-                    const errMsg = result.error?.message || "Unknown error";
-                    throw new Error(`API Error: ${errMsg}`);
-                }
-
-                let aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                // Очистка от Markdown если ИИ его добавил случайно
-                aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
-                
-                return JSON.parse(aiText);
-            } catch (e) {
-                console.error("AI Fetch Error:", e);
-                throw e;
-            }
-        }
-
-        async function generateImage(p) {
-            if (!apiKey) return null;
-            try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
-                const r = await fetch(url, {
-                    method: 'POST',
-                    body: JSON.stringify({ instances: { prompt: p }, parameters: { sampleCount: 1 } })
-                });
-                const d = await r.json();
-                if (d.predictions && d.predictions[0]) {
-                    return `data:image/png;base64,${d.predictions[0].bytesBase64Encoded}`;
-                }
-                return null;
-            } catch (e) {
-                console.warn("Image gen failed:", e);
-                return null;
-            }
-        }
-
-        window.startSession = (type) => {
-            currentSubject = document.getElementById('subject').value;
-            currentTopic = document.getElementById('topic').value.trim();
-            if (!currentTopic) return alert("Будь ласка, введи тему навчання!");
-
-            document.getElementById('main-screen').classList.add('hidden');
-            if (type === 'lecture') {
-                document.getElementById('lecture-screen').classList.remove('hidden');
-                loadLecture();
-            } else {
-                document.getElementById('test-screen').classList.remove('hidden');
-                loadTest();
-            }
+            if (mode === 'lecture') generateLecture(subject, topic);
+            else generateTest(subject, topic);
         };
 
-        window.loadLecture = async () => {
-            const container = document.getElementById('lecture-content');
-            const loader = document.getElementById('lecture-loading');
-            const errBox = document.getElementById('lecture-error-box');
+        async function fetchAI(prompt, sys) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
             
-            document.getElementById('lecture-title').innerText = currentTopic;
-            loader.classList.remove('hidden');
-            errBox.classList.add('hidden');
-            container.innerHTML = "";
-            
-            const prompt = `Напиши цікаву лекцію українською мовою про "${currentTopic}" (Предмет: ${currentSubject}). 
-            Розбий на 3 блоки. Для кожного блоку придумай короткий англійський prompt для генерації картинки.
-            Відповідь ТІЛЬКИ у форматі JSON: { "blocks": [{ "title": "Заголовок", "text": "Текст", "imagePrompt": "English prompt" }] }`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    systemInstruction: { parts: [{ text: sys }] },
+                    generationConfig: { responseMimeType: "application/json", temperature: 0.8 }
+                })
+            });
 
+            if (!response.ok) throw new Error(await response.text());
+            const data = await response.json();
+            return JSON.parse(data.candidates[0].content.parts[0].text);
+        }
+
+        async function generateLecture(subject, topic) {
             try {
-                const data = await askAI(prompt, "Ти досвідчений вчитель. Пиши структуровано та цікаво.");
-                loader.classList.add('hidden');
+                const prompt = `Напиши подробную лекцию на русском про "${topic}" (Предмет: ${subject}). 
+                Раздели на 3 логических блока. Для каждого блока придумай описание для картинки на английском.
+                JSON формат: { "blocks": [{ "title": "Заголовок", "text": "Текст", "imgPrompt": "English prompt" }] }`;
                 
-                for (const b of data.blocks) {
-                    const blockDiv = document.createElement('div');
-                    blockDiv.className = "fade-in space-y-4 border-b border-white/5 pb-8 last:border-0";
-                    blockDiv.innerHTML = `<h3 class="text-2xl font-bold text-indigo-300">${b.title}</h3><p class="text-slate-300 text-lg leading-relaxed">${b.text}</p>`;
-                    
-                    const imgContainer = document.createElement('div');
-                    imgContainer.className = "w-full aspect-video rounded-3xl bg-slate-800/50 animate-pulse flex items-center justify-center overflow-hidden mb-4";
-                    imgContainer.innerHTML = '<span class="text-xs text-slate-500">Генерую ілюстрацію...</span>';
-                    blockDiv.appendChild(imgContainer);
-                    container.appendChild(blockDiv);
-
-                    generateImage(b.imagePrompt).then(url => {
-                        if (url) {
-                            imgContainer.classList.remove('animate-pulse');
-                            imgContainer.innerHTML = `<img src="${url}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-700" alt="Illustration">`;
-                        } else {
-                            imgContainer.remove();
-                        }
-                    });
-                }
+                const data = await fetchAI(prompt, "Ты крутой преподаватель. Пиши на 'ты', современно и понятно.");
+                
+                loadingState.classList.add('hidden');
+                resultArea.classList.remove('hidden');
+                statusBadge.innerText = "ЛЕКЦИЯ";
+                
+                resultArea.innerHTML = `<h2 class="heading text-4xl font-bold mb-10 text-white">${topic}</h2>`;
+                
+                data.blocks.forEach(block => {
+                    const el = document.createElement('div');
+                    el.className = "question-card space-y-6 mb-12 border-b border-white/5 pb-10";
+                    el.innerHTML = `
+                        <h3 class="text-2xl font-bold text-purple-400">${block.title}</h3>
+                        <p class="text-slate-300 leading-relaxed text-lg">${block.text}</p>
+                        <div class="rounded-3xl overflow-hidden bg-white/5 aspect-video flex items-center justify-center text-xs text-slate-600 border border-white/5">
+                            
+                        </div>
+                    `;
+                    resultArea.appendChild(el);
+                });
             } catch (e) {
-                loader.classList.add('hidden');
-                errBox.innerText = `Не вдалося завантажити лекцію. ${e.message}`;
-                errBox.classList.remove('hidden');
+                alert("Ошибка: " + e.message);
             }
         }
 
-        window.loadTest = async () => {
-            const loader = document.getElementById('test-loading');
-            const content = document.getElementById('test-content');
-            const errBox = document.getElementById('test-error-box');
-
-            loader.classList.remove('hidden');
-            content.classList.add('hidden');
-            errBox.classList.add('hidden');
-
-            const prompt = `Створи тест на 10 питань про "${currentTopic}" (${currentSubject}). 
-            Відповідь ТІЛЬКИ у форматі JSON: { "questions": [{ "q": "Питання", "options": ["Варіант 1", "Варіант 2", "Варіант 3", "Варіант 4"], "correct": 0 }] }`;
-
+        async function generateTest(subject, topic) {
             try {
-                const data = await askAI(prompt, "Ти екзаменатор. Роби питання середньої складності.");
-                testData = data.questions;
-                currentQuestionIdx = 0;
-                score = 0;
-                loader.classList.add('hidden');
-                content.classList.remove('hidden');
+                const prompt = `Создай тест из 10 вопросов на русском по теме "${topic}" (${subject}).
+                JSON формат: { "questions": [{ "q": "Вопрос", "options": ["А", "Б", "В", "Г"], "correct": 0 }] }`;
+                
+                const data = await fetchAI(prompt, "Ты строгий, но справедливый экзаменатор.");
+                testQuestions = data.questions;
+                
+                loadingState.classList.add('hidden');
+                resultArea.classList.remove('hidden');
+                statusBadge.innerText = "ТЕСТ";
                 renderQuestion();
-                startTimer();
             } catch (e) {
-                loader.classList.add('hidden');
-                errBox.innerText = `Помилка генерації тесту: ${e.message}`;
-                errBox.classList.remove('hidden');
+                alert("Ошибка: " + e.message);
             }
-        };
+        }
 
         function renderQuestion() {
-            isAnswered = false;
-            document.getElementById('next-btn').classList.add('hidden');
-            const q = testData[currentQuestionIdx];
-            document.getElementById('question-index').innerText = `Питання ${currentQuestionIdx + 1}/${testData.length}`;
-            document.getElementById('question-text').innerText = q.q;
-            
-            const container = document.getElementById('options-container');
-            container.innerHTML = "";
+            const q = testQuestions[currentIdx];
+            resultArea.innerHTML = `
+                <div class="question-card">
+                    <div class="flex justify-between text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest">
+                        <span>Вопрос ${currentIdx + 1} / ${testQuestions.length}</span>
+                        <span class="text-purple-400">Счет: ${score}</span>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-8 text-white">${q.q}</h2>
+                    <div id="options" class="grid grid-cols-1 gap-3"></div>
+                </div>
+            `;
+
+            const optsDiv = document.getElementById('options');
             q.options.forEach((opt, i) => {
                 const btn = document.createElement('button');
-                btn.className = "option-btn w-full text-left p-5 rounded-2xl bg-slate-800/40 border border-white/5 font-medium";
+                btn.className = "w-full text-left p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500 transition-all font-medium";
                 btn.innerText = opt;
-                btn.onclick = () => {
-                    if (isAnswered) return;
-                    isAnswered = true;
-                    if (i === q.correct) { 
-                        score++; 
-                        btn.classList.add('correct');
-                    } else { 
-                        btn.classList.add('wrong'); 
-                        document.querySelectorAll('.option-btn')[q.correct].classList.add('correct'); 
-                    }
-                    document.getElementById('score-display').innerText = `Рахунок: ${score}`;
-                    document.getElementById('next-btn').classList.remove('hidden');
-                };
-                container.appendChild(btn);
+                btn.onclick = () => handleAnswer(i, btn);
+                optsDiv.appendChild(btn);
             });
         }
 
-        window.nextQuestion = () => {
-            currentQuestionIdx++;
-            if (currentQuestionIdx < testData.length) renderQuestion();
-            else finishTest();
-        };
+        function handleAnswer(choice, btn) {
+            const correct = testQuestions[currentIdx].correct;
+            const allBtns = document.querySelectorAll('#options button');
+            allBtns.forEach(b => b.disabled = true);
 
-        function startTimer() {
-            clearInterval(timerInt);
-            timerVal = 600;
-            timerInt = setInterval(() => {
-                timerVal--;
-                if (timerVal <= 0) finishTest();
-                const m = Math.floor(timerVal/60), s = timerVal%60;
-                document.getElementById('timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
-            }, 1000);
+            if (choice === correct) {
+                btn.classList.add('bg-green-500/20', 'border-green-500/50', 'text-green-400');
+                score++;
+            } else {
+                btn.classList.add('bg-red-500/20', 'border-red-500/50', 'text-red-400');
+                allBtns[correct].classList.add('bg-green-500/20', 'border-green-500/50', 'text-green-400');
+            }
+
+            setTimeout(() => {
+                currentIdx++;
+                if (currentIdx < testQuestions.length) renderQuestion();
+                else showResults();
+            }, 1500);
         }
 
-        function finishTest() {
-            clearInterval(timerInt);
-            const content = document.getElementById('test-content');
-            content.innerHTML = `
-                <div class="text-center py-10 fade-in">
-                    <div class="text-6xl mb-6">🎓</div>
-                    <h2 class="text-4xl font-bold mb-2 gradient-text">Тест завершено!</h2>
-                    <p class="text-slate-400 mb-8 text-xl">Твій результат: <span class="text-white font-bold">${score}</span> з ${testData.length}</p>
-                    <div class="w-full bg-slate-800 h-2 rounded-full mb-10 overflow-hidden">
-                        <div class="bg-indigo-500 h-full rounded-full transition-all duration-1000" style="width: ${(score/testData.length)*100}%"></div>
-                    </div>
-                    <button onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 px-10 py-4 rounded-2xl font-bold transition-all shadow-lg">На головну</button>
+        function showResults() {
+            resultArea.innerHTML = `
+                <div class="text-center py-20 question-card">
+                    <div class="text-6xl mb-6">🏆</div>
+                    <h2 class="heading text-4xl font-bold mb-4">Разнос окончен!</h2>
+                    <p class="text-slate-400 text-xl mb-10">Твой результат: <span class="text-white font-bold">${score}</span> из ${testQuestions.length}</p>
+                    <button onclick="window.location.reload()" class="btn-primary px-10 py-4 rounded-2xl font-bold">На главную</button>
                 </div>
             `;
         }
-
-        window.goHome = () => location.reload();
     </script>
 </body>
 </html>
