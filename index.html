@@ -14,93 +14,111 @@
         .loader { border: 4px solid rgba(255, 255, 255, 0.1); border-left-color: #818cf8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
+        .option-btn { transition: all 0.2s ease; border: 1px solid rgba(255,255,255,0.05); }
+        .option-btn:hover { background: rgba(255,255,255,0.05); transform: translateX(4px); }
         .option-btn.correct { background-color: rgba(34, 197, 94, 0.2) !important; border-color: #22c55e !important; color: #4ade80 !important; }
         .option-btn.wrong { background-color: rgba(239, 68, 68, 0.2) !important; border-color: #ef4444 !important; color: #f87171 !important; }
         
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .error-msg { color: #f87171; background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(239, 68, 68, 0.2); margin-top: 1rem; font-size: 0.875rem; word-break: break-all; }
+        .error-msg { color: #f87171; background: rgba(239, 68, 68, 0.1); padding: 1.5rem; border-radius: 1rem; border: 1px solid rgba(239, 68, 68, 0.2); margin-top: 1rem; font-size: 0.9rem; line-height: 1.5; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <!-- Головний екран -->
     <div id="main-screen" class="glass p-8 rounded-3xl w-full max-w-md shadow-2xl transition-all fade-in">
-        <h1 class="text-4xl font-bold mb-6 text-center gradient-text">Study AI</h1>
-        <p class="text-slate-400 text-center mb-8">Вибери предмет і тему. Я підготую все за кілька секунд, MATB.</p>
+        <h1 class="text-4xl font-bold mb-2 text-center gradient-text">Study AI</h1>
+        <p class="text-slate-400 text-center mb-8 text-sm">Твій персональний вчитель, MATB.</p>
         
         <div class="space-y-4">
+            <div id="api-warning" class="hidden text-xs text-red-400 bg-red-400/10 p-3 rounded-xl border border-red-400/20 mb-4">
+                <b>Помилка:</b> API Key порожній! Встав ключ із Google AI Studio в код (рядок 126), інакше нічого не запрацює.
+            </div>
+
             <div>
-                <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Предмет (НУШ)</label>
-                <select id="subject" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <label class="block text-xs font-semibold uppercase tracking-wider mb-2 ml-1 text-slate-500">Предмет</label>
+                <select id="subject" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer">
                     <option value="Математика">Математика</option>
                     <option value="Алгебра">Алгебра</option>
-                    <option value="Геометрія">Геометрія</option>
                     <option value="Українська мова">Українська мова</option>
                     <option value="Українська література">Українська література</option>
-                    <option value="Зарубіжна література">Зарубіжна література</option>
-                    <option value="Англійська мова">Англійська мова</option>
                     <option value="Історія України">Історія України</option>
                     <option value="Фізика">Фізика</option>
-                    <option value="Хімія">Хімія</option>
                     <option value="Біологія">Біологія</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Тема лекції/тесту</label>
-                <input type="text" id="topic" placeholder="Напр: Міщанин Шляхтич" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <label class="block text-xs font-semibold uppercase tracking-wider mb-2 ml-1 text-slate-500">Тема</label>
+                <input type="text" id="topic" placeholder="Напр: Квадратні рівняння" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
             </div>
 
             <div class="grid grid-cols-2 gap-4 mt-8">
-                <button onclick="startSession('lecture')" class="bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95">📖 Лекція</button>
-                <button onclick="startSession('test')" class="bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95">📝 Тест</button>
+                <button onclick="startSession('lecture')" class="bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95 flex flex-col items-center">
+                    <span class="text-xl">📖</span>
+                    <span class="text-sm">Лекція</span>
+                </button>
+                <button onclick="startSession('test')" class="bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95 flex flex-col items-center">
+                    <span class="text-xl">📝</span>
+                    <span class="text-sm">Тест</span>
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Екран Лекції -->
     <div id="lecture-screen" class="hidden w-full max-w-4xl space-y-6 fade-in">
-        <button onclick="goHome()" class="text-slate-400 hover:text-white transition-colors">← Назад</button>
+        <button onclick="goHome()" class="text-slate-400 hover:text-white transition-colors flex items-center gap-2">
+            <span>← На головну</span>
+        </button>
         <div class="glass p-8 rounded-3xl">
             <h2 id="lecture-title" class="text-3xl font-bold mb-6 gradient-text"></h2>
             <div id="lecture-loading" class="flex flex-col items-center py-20">
                 <div class="loader mb-4"></div>
-                <p id="lecture-status" class="text-slate-400 text-center">Пишу лекцію, MATB, почекай трохи...</p>
+                <p id="lecture-status" class="text-slate-400 text-center italic">Інтелект завантажує знання...</p>
                 <div id="lecture-error-box" class="hidden error-msg"></div>
-                <button id="retry-lecture-btn" onclick="loadLecture()" class="hidden mt-4 bg-slate-700 px-6 py-2 rounded-lg text-sm">Спробувати ще раз</button>
             </div>
-            <div id="lecture-content" class="space-y-10"></div>
+            <div id="lecture-content" class="space-y-12"></div>
         </div>
     </div>
 
     <!-- Екран Тесту -->
     <div id="test-screen" class="hidden w-full max-w-2xl fade-in">
         <div class="flex justify-between items-center mb-6">
-            <button onclick="goHome()" class="text-slate-400 hover:text-white">← Здатися</button>
-            <div id="timer" class="bg-red-500/20 text-red-400 px-4 py-2 rounded-full font-mono font-bold border border-red-500/30">10:00</div>
+            <button onclick="goHome()" class="text-slate-400 hover:text-white">← Вийти</button>
+            <div id="timer" class="bg-slate-800 px-4 py-2 rounded-full font-mono font-bold border border-slate-700">10:00</div>
         </div>
-        <div class="glass p-8 rounded-3xl min-h-[400px] flex flex-col">
+        <div class="glass p-8 rounded-3xl min-h-[450px] flex flex-col">
             <div id="test-loading" class="flex flex-col items-center justify-center flex-grow py-20">
                 <div class="loader mb-4"></div>
-                <p id="test-status" class="text-slate-400 text-center">Створюю питання для геніїв...</p>
+                <p id="test-status" class="text-slate-400 text-center">Генерую підступні питання...</p>
                 <div id="test-error-box" class="hidden error-msg"></div>
-                <button id="retry-test-btn" onclick="loadTest()" class="hidden mt-4 bg-slate-700 px-6 py-2 rounded-lg text-sm">Спробувати ще раз</button>
             </div>
             <div id="test-content" class="hidden">
-                <div class="flex justify-between text-sm text-slate-400 mb-6">
+                <div class="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-500 mb-6">
                     <span id="question-index">Питання 1/16</span>
-                    <span id="score-display">Бали: 0</span>
+                    <span id="score-display" class="text-indigo-400">Рахунок: 0</span>
                 </div>
-                <h3 id="question-text" class="text-2xl font-semibold mb-8"></h3>
+                <h3 id="question-text" class="text-2xl font-semibold mb-8 leading-tight"></h3>
                 <div id="options-container" class="grid grid-cols-1 gap-3"></div>
-                <button id="next-btn" onclick="nextQuestion()" class="hidden w-full mt-8 bg-indigo-600 py-4 rounded-xl font-bold shadow-lg">Далі →</button>
+                <button id="next-btn" onclick="nextQuestion()" class="hidden w-full mt-8 bg-indigo-600 py-4 rounded-xl font-bold shadow-lg hover:bg-indigo-500 transition-all">Наступне питання →</button>
             </div>
         </div>
     </div>
 
     <script type="module">
+        // ==========================================
+        // МАТБ, ВСТАВ СВІЙ API KEY НИЖЧЕ!
+        // Перепиши пусті лапки ключем з image_d1e584.png
+        // ==========================================
         const apiKey = ""; 
+        // ==========================================
+
+        if (!apiKey) {
+            document.getElementById('api-warning').classList.remove('hidden');
+        }
+
         let currentSubject = "";
         let currentTopic = "";
         let testData = [];
@@ -110,65 +128,63 @@
         let timerVal = 600;
         let timerInt = null;
 
-        // Покращений парсер JSON, який витягує дані навіть з "брудного" тексту
-        function extractJSON(text) {
+        async function askAI(prompt, systemPrompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
             try {
-                // Шукаємо першу { і останню }
-                const firstBracket = text.indexOf('{');
-                const lastBracket = text.lastIndexOf('}');
-                if (firstBracket !== -1 && lastBracket !== -1) {
-                    const jsonString = text.substring(firstBracket, lastBracket + 1);
-                    return JSON.parse(jsonString);
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: { 
+                            temperature: 0.7,
+                            responseMimeType: "application/json"
+                        }
+                    })
+                });
+                
+                const result = await resp.json();
+                if (!resp.ok) {
+                    const errMsg = result.error?.message || "Unknown error";
+                    throw new Error(`API Error: ${errMsg}`);
                 }
-                return JSON.parse(text);
+
+                let aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                // Очистка от Markdown если ИИ его добавил случайно
+                aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
+                
+                return JSON.parse(aiText);
             } catch (e) {
-                console.error("JSON Parse Error:", e, "Raw text:", text);
-                return null;
+                console.error("AI Fetch Error:", e);
+                throw e;
             }
         }
 
-        async function askAI(prompt, isTest = false) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            
-            for (let i = 0; i < 5; i++) { // Більше спроб
-                try {
-                    const resp = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }],
-                            generationConfig: { 
-                                temperature: isTest ? 0.1 : 0.5,
-                                responseMimeType: "application/json"
-                            }
-                        })
-                    });
-                    
-                    const result = await resp.json();
-                    
-                    if (!resp.ok) {
-                        throw new Error(result.error?.message || `Помилка API: ${resp.status}`);
-                    }
-
-                    const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (!aiText) throw new Error("ІІ повернув порожню відповідь");
-                    
-                    const data = extractJSON(aiText);
-                    if (data) return data;
-                    
-                    throw new Error("Не вдалося розпізнати формат даних");
-                } catch (e) {
-                    console.warn(`Спроба ${i+1} не вдалася:`, e.message);
-                    if (i === 4) throw e;
-                    await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i))); // Експоненціальна затримка
+        async function generateImage(p) {
+            if (!apiKey) return null;
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+                const r = await fetch(url, {
+                    method: 'POST',
+                    body: JSON.stringify({ instances: { prompt: p }, parameters: { sampleCount: 1 } })
+                });
+                const d = await r.json();
+                if (d.predictions && d.predictions[0]) {
+                    return `data:image/png;base64,${d.predictions[0].bytesBase64Encoded}`;
                 }
+                return null;
+            } catch (e) {
+                console.warn("Image gen failed:", e);
+                return null;
             }
         }
 
         window.startSession = (type) => {
             currentSubject = document.getElementById('subject').value;
             currentTopic = document.getElementById('topic').value.trim();
-            if (!currentTopic) return alert("Введи тему, MATB!");
+            if (!currentTopic) return alert("Будь ласка, введи тему навчання!");
 
             document.getElementById('main-screen').classList.add('hidden');
             if (type === 'lecture') {
@@ -181,132 +197,102 @@
         };
 
         window.loadLecture = async () => {
-            document.getElementById('lecture-title').innerText = currentTopic;
-            document.getElementById('lecture-loading').classList.remove('hidden');
-            document.getElementById('retry-lecture-btn').classList.add('hidden');
-            document.getElementById('lecture-error-box').classList.add('hidden');
-            document.getElementById('lecture-status').innerText = "Пишу лекцію, MATB, почекай трохи...";
-            document.querySelector('#lecture-loading .loader').classList.remove('hidden');
+            const container = document.getElementById('lecture-content');
+            const loader = document.getElementById('lecture-loading');
+            const errBox = document.getElementById('lecture-error-box');
             
-            const content = document.getElementById('lecture-content');
-            content.innerHTML = "";
-
-            const prompt = `Write a detailed educational lecture in Ukrainian.
-            Subject: ${currentSubject}
-            Topic: ${currentTopic}
-            Requirement: Exactly 4 sections. Each section must have at least 250 characters.
-            Respond ONLY with this JSON structure:
-            { "blocks": [{ "title": "Section Title", "text": "Section Content", "imagePrompt": "Detailed English prompt for image generation" }] }`;
+            document.getElementById('lecture-title').innerText = currentTopic;
+            loader.classList.remove('hidden');
+            errBox.classList.add('hidden');
+            container.innerHTML = "";
+            
+            const prompt = `Напиши цікаву лекцію українською мовою про "${currentTopic}" (Предмет: ${currentSubject}). 
+            Розбий на 3 блоки. Для кожного блоку придумай короткий англійський prompt для генерації картинки.
+            Відповідь ТІЛЬКИ у форматі JSON: { "blocks": [{ "title": "Заголовок", "text": "Текст", "imagePrompt": "English prompt" }] }`;
 
             try {
-                const data = await askAI(prompt);
-                document.getElementById('lecture-loading').classList.add('hidden');
+                const data = await askAI(prompt, "Ти досвідчений вчитель. Пиши структуровано та цікаво.");
+                loader.classList.add('hidden');
                 
-                data.blocks.forEach(b => {
-                    const block = document.createElement('div');
-                    block.className = "fade-in space-y-4";
-                    block.innerHTML = `
-                        <h3 class="text-2xl font-bold text-indigo-300 border-l-4 border-indigo-500 pl-4">${b.title}</h3>
-                        <p class="text-slate-300 text-lg leading-relaxed">${b.text}</p>
-                    `;
+                for (const b of data.blocks) {
+                    const blockDiv = document.createElement('div');
+                    blockDiv.className = "fade-in space-y-4 border-b border-white/5 pb-8 last:border-0";
+                    blockDiv.innerHTML = `<h3 class="text-2xl font-bold text-indigo-300">${b.title}</h3><p class="text-slate-300 text-lg leading-relaxed">${b.text}</p>`;
                     
-                    const imgPlaceholder = document.createElement('div');
-                    imgPlaceholder.className = "w-full aspect-video rounded-2xl bg-slate-800/50 border border-white/5 flex items-center justify-center overflow-hidden shadow-inner mt-4";
-                    imgPlaceholder.innerHTML = '<div class="loader"></div>';
-                    block.appendChild(imgPlaceholder);
-                    content.appendChild(block);
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = "w-full aspect-video rounded-3xl bg-slate-800/50 animate-pulse flex items-center justify-center overflow-hidden mb-4";
+                    imgContainer.innerHTML = '<span class="text-xs text-slate-500">Генерую ілюстрацію...</span>';
+                    blockDiv.appendChild(imgContainer);
+                    container.appendChild(blockDiv);
 
                     generateImage(b.imagePrompt).then(url => {
-                        imgPlaceholder.innerHTML = `<img src="${url}" class="w-full h-full object-cover transition-opacity duration-700 opacity-0" onload="this.style.opacity='1'" alt="ілюстрація">`;
-                    }).catch(() => {
-                        imgPlaceholder.innerHTML = `<div class="text-slate-500 text-sm">Картинка не прогрузилась</div>`;
+                        if (url) {
+                            imgContainer.classList.remove('animate-pulse');
+                            imgContainer.innerHTML = `<img src="${url}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-700" alt="Illustration">`;
+                        } else {
+                            imgContainer.remove();
+                        }
                     });
-                });
+                }
             } catch (e) {
-                showError('lecture', e.message);
+                loader.classList.add('hidden');
+                errBox.innerText = `Не вдалося завантажити лекцію. ${e.message}`;
+                errBox.classList.remove('hidden');
             }
-        }
-
-        async function generateImage(p) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
-            const r = await fetch(url, {
-                method: 'POST',
-                body: JSON.stringify({ instances: { prompt: `${p}, 4k, cinematic lighting, educational concept art` } })
-            });
-            if (!r.ok) throw new Error();
-            const d = await r.json();
-            return `data:image/png;base64,${d.predictions[0].bytesBase64Encoded}`;
         }
 
         window.loadTest = async () => {
-            document.getElementById('test-loading').classList.remove('hidden');
-            document.getElementById('test-content').classList.add('hidden');
-            document.getElementById('retry-test-btn').classList.add('hidden');
-            document.getElementById('test-error-box').classList.add('hidden');
-            document.getElementById('test-status').innerText = "Створюю питання для геніїв...";
-            document.querySelector('#test-loading .loader').classList.remove('hidden');
+            const loader = document.getElementById('test-loading');
+            const content = document.getElementById('test-content');
+            const errBox = document.getElementById('test-error-box');
 
-            const prompt = `Create a hard multiple-choice test in Ukrainian.
-            Subject: ${currentSubject}
-            Topic: ${currentTopic}
-            Requirement: Exactly 16 questions. 4 options per question. 
-            Respond ONLY with this JSON structure:
-            { "questions": [{ "q": "Question text", "options": ["A", "B", "C", "D"], "correct": 0 }] }`;
+            loader.classList.remove('hidden');
+            content.classList.add('hidden');
+            errBox.classList.add('hidden');
+
+            const prompt = `Створи тест на 10 питань про "${currentTopic}" (${currentSubject}). 
+            Відповідь ТІЛЬКИ у форматі JSON: { "questions": [{ "q": "Питання", "options": ["Варіант 1", "Варіант 2", "Варіант 3", "Варіант 4"], "correct": 0 }] }`;
 
             try {
-                const data = await askAI(prompt, true);
+                const data = await askAI(prompt, "Ти екзаменатор. Роби питання середньої складності.");
                 testData = data.questions;
-                if (!testData || testData.length === 0) throw new Error("Порожній список питань");
-                
                 currentQuestionIdx = 0;
                 score = 0;
-                document.getElementById('test-loading').classList.add('hidden');
-                document.getElementById('test-content').classList.remove('hidden');
+                loader.classList.add('hidden');
+                content.classList.remove('hidden');
                 renderQuestion();
                 startTimer();
             } catch (e) {
-                showError('test', e.message);
+                loader.classList.add('hidden');
+                errBox.innerText = `Помилка генерації тесту: ${e.message}`;
+                errBox.classList.remove('hidden');
             }
         };
-
-        function showError(type, msg) {
-            const box = document.getElementById(`${type}-error-box`);
-            const status = document.getElementById(`${type}-status`);
-            const retry = document.getElementById(`retry-${type}-btn`);
-            const loader = document.querySelector(`#${type}-loading .loader`);
-
-            box.innerText = `Пиздець стався: ${msg}`;
-            box.classList.remove('hidden');
-            status.innerText = "Щось пішло не так.";
-            retry.classList.remove('hidden');
-            if (loader) loader.classList.add('hidden');
-        }
 
         function renderQuestion() {
             isAnswered = false;
             document.getElementById('next-btn').classList.add('hidden');
             const q = testData[currentQuestionIdx];
-            document.getElementById('question-index').innerText = `Питання ${currentQuestionIdx + 1}/16`;
+            document.getElementById('question-index').innerText = `Питання ${currentQuestionIdx + 1}/${testData.length}`;
             document.getElementById('question-text').innerText = q.q;
             
             const container = document.getElementById('options-container');
             container.innerHTML = "";
             q.options.forEach((opt, i) => {
                 const btn = document.createElement('button');
-                btn.className = "option-btn w-full text-left p-4 rounded-xl bg-slate-800 border border-white/5 hover:border-indigo-500/50 transition-all active:scale-[0.98]";
+                btn.className = "option-btn w-full text-left p-5 rounded-2xl bg-slate-800/40 border border-white/5 font-medium";
                 btn.innerText = opt;
                 btn.onclick = () => {
                     if (isAnswered) return;
                     isAnswered = true;
-                    if (i === q.correct) {
-                        score++;
+                    if (i === q.correct) { 
+                        score++; 
                         btn.classList.add('correct');
-                    } else {
-                        btn.classList.add('wrong');
-                        const btns = document.querySelectorAll('.option-btn');
-                        if (btns[q.correct]) btns[q.correct].classList.add('correct');
+                    } else { 
+                        btn.classList.add('wrong'); 
+                        document.querySelectorAll('.option-btn')[q.correct].classList.add('correct'); 
                     }
-                    document.getElementById('score-display').innerText = `Бали: ${score}`;
+                    document.getElementById('score-display').innerText = `Рахунок: ${score}`;
                     document.getElementById('next-btn').classList.remove('hidden');
                 };
                 container.appendChild(btn);
@@ -322,35 +308,31 @@
         function startTimer() {
             clearInterval(timerInt);
             timerVal = 600;
-            const timerEl = document.getElementById('timer');
             timerInt = setInterval(() => {
                 timerVal--;
-                if (timerVal < 0) {
-                    finishTest();
-                    return;
-                }
+                if (timerVal <= 0) finishTest();
                 const m = Math.floor(timerVal/60), s = timerVal%60;
-                timerEl.innerText = `${m}:${s < 10 ? '0'+s : s}`;
+                document.getElementById('timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
             }, 1000);
         }
 
         function finishTest() {
             clearInterval(timerInt);
-            document.getElementById('test-content').innerHTML = `
+            const content = document.getElementById('test-content');
+            content.innerHTML = `
                 <div class="text-center py-10 fade-in">
-                    <h2 class="text-4xl font-bold mb-4 gradient-text">Кінець тесту!</h2>
-                    <p class="text-xl text-slate-400 mb-8">Твій результат: <span class="text-white font-bold">${score} з ${testData.length}</span></p>
-                    <div class="space-y-4">
-                        <button onclick="goHome()" class="w-full bg-indigo-600 px-10 py-4 rounded-xl font-bold shadow-lg active:scale-95">На головну</button>
+                    <div class="text-6xl mb-6">🎓</div>
+                    <h2 class="text-4xl font-bold mb-2 gradient-text">Тест завершено!</h2>
+                    <p class="text-slate-400 mb-8 text-xl">Твій результат: <span class="text-white font-bold">${score}</span> з ${testData.length}</p>
+                    <div class="w-full bg-slate-800 h-2 rounded-full mb-10 overflow-hidden">
+                        <div class="bg-indigo-500 h-full rounded-full transition-all duration-1000" style="width: ${(score/testData.length)*100}%"></div>
                     </div>
+                    <button onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 px-10 py-4 rounded-2xl font-bold transition-all shadow-lg">На головну</button>
                 </div>
             `;
         }
 
-        window.goHome = () => {
-            clearInterval(timerInt);
-            location.reload();
-        };
+        window.goHome = () => location.reload();
     </script>
 </body>
 </html>
