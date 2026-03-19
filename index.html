@@ -60,34 +60,35 @@
     <!-- Главный экран -->
     <div id="setup-screen" class="glass-panel p-8 rounded-[2rem] w-full max-w-lg transition-all">
         <div class="text-center mb-10">
-            <h1 class="heading text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 mb-2">STUDY AI</h1>
-            <p class="text-slate-500 text-sm">Выбери предмет и начни разнос в учебе, MATB.</p>
+            <h1 class="heading text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 mb-2">STUDY HUB v2</h1>
+            <p class="text-slate-500 text-sm">Огромная база знаний 8 класса для тебя, MATB.</p>
         </div>
 
         <div class="space-y-6">
             <div>
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Предмет</label>
                 <select id="subject-select" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-purple-500 transition-colors cursor-pointer text-lg text-white">
-                    <option value="Математика">📐 Математика</option>
                     <option value="Алгебра">🔢 Алгебра</option>
                     <option value="Геометрия">📏 Геометрия</option>
                     <option value="Физика">⚡ Физика</option>
+                    <option value="Литература">📚 Литература</option>
+                    <option value="История">📜 История</option>
                     <option value="Химия">🧪 Химия</option>
                     <option value="Биология">🌿 Биология</option>
-                    <option value="Информатика">💻 Информатика</option>
-                    <option value="История">📜 История</option>
                     <option value="География">🌍 География</option>
-                    <option value="Литература">📚 Литература</option>
-                    <option value="Зарубежная литература">📖 Зарубежная литература</option>
-                    <option value="Украинский язык">🇺🇦 Украинский язык</option>
-                    <option value="Английский язык">🇬🇧 Английский язык</option>
-                    <option value="Правоведение">⚖️ Правоведение</option>
                 </select>
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Тема занятия</label>
-                <input type="text" id="topic-input" placeholder="Напр: Мещанин во дворянстве" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-purple-500 transition-all text-lg text-white">
+                <input type="text" id="topic-input" list="topic-hints" placeholder="Начни вводить тему..." class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:border-purple-500 transition-all text-lg text-white">
+                <datalist id="topic-hints">
+                    <option value="Квадратные корни">
+                    <option value="Квадратные уравнения">
+                    <option value="Мещанин во дворянстве">
+                    <option value="Капитанская дочка">
+                    <option value="Тепловые явления">
+                </datalist>
             </div>
 
             <div class="grid grid-cols-2 gap-4 pt-4">
@@ -102,8 +103,8 @@
             </div>
         </div>
         
-        <div id="api-error" class="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs hidden">
-            <p id="error-text">Ошибка: Проверь API Key!</p>
+        <div id="api-error" class="mt-6 p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-400 text-xs hidden text-center">
+            <p id="error-text">Темы нет в базе, использую ИИ для генерации...</p>
         </div>
     </div>
 
@@ -111,25 +112,64 @@
     <div id="content-screen" class="hidden w-full max-w-4xl glass-panel p-8 rounded-[2rem] min-h-[600px] flex flex-col">
         <div class="flex justify-between items-center mb-8">
             <button onclick="window.location.reload()" class="text-slate-500 hover:text-white transition-colors">← Назад</button>
-            <div id="status-badge" class="px-4 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-bold border border-purple-500/20 uppercase">ГОТОВЛЮ...</div>
+            <div id="status-badge" class="px-4 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold border border-indigo-500/20 uppercase">БАЗА ДАННЫХ</div>
         </div>
 
         <div id="loading-state" class="flex-grow flex flex-col items-center justify-center space-y-4">
             <div class="loader"></div>
-            <p class="text-slate-400 animate-pulse text-sm">ИИ генерирует контент для тебя...</p>
+            <p class="text-slate-400 animate-pulse text-sm">Извлекаю данные из архивов...</p>
         </div>
 
         <div id="result-area" class="hidden space-y-8 pb-10 overflow-y-auto max-h-[70vh] pr-4">
-            <!-- Сюда вставляется лекция или тест -->
+            <!-- Контент -->
         </div>
     </div>
 
     <script type="module">
         // ==========================================
-        // МАТБ, ТВОЙ КЛЮЧ ЗДЕСЬ
+        // ОГРОМНАЯ ЛОКАЛЬНАЯ БАЗА (MATB SPECIAL)
+        // Сюда можно добавлять сотни тем.
         // ==========================================
+        const LOCAL_DATABASE = {
+            "Алгебра": {
+                "Квадратные корни": {
+                    lecture: {
+                        blocks: [
+                            { title: "Определение", text: "Арифметическим квадратным корнем из числа a называется неотрицательное число, квадрат которого равен a.", imgPrompt: "Mathematical square root symbol on a dark background" },
+                            { title: "Свойства", text: "Корень из произведения равен произведению корней. Корень из дроби равен корню из числителя, деленному на корень из знаменателя.", imgPrompt: "Algebraic formulas glowing in neon colors" },
+                            { title: "Извлечение корня", text: "Процесс нахождения корня называется извлечением. Если число не является полным квадратом, корень будет иррациональным числом.", imgPrompt: "Numbers and symbols floating in space" }
+                        ]
+                    },
+                    test: {
+                        questions: [
+                            { q: "Чему равен √64?", options: ["6", "7", "8", "9"], correct: 2 },
+                            { q: "Вычислите √0,16", options: ["0,4", "0,04", "4", "0,8"], correct: 0 },
+                            { q: "√a существует только при...", options: ["a > 0", "a ≥ 0", "a < 0", "любом a"], correct: 1 }
+                        ]
+                    }
+                }
+            },
+            "Литература": {
+                "Мещанин во дворянстве": {
+                    lecture: {
+                        blocks: [
+                            { title: "Автор и эпоха", text: "Комедия-балет Мольера, написанная в 1670 году. Это классицизм в чистом виде, высмеивающий пороки общества.", imgPrompt: "Old French theater stage with baroque decorations" },
+                            { title: "Главный герой", text: "Журден — богатый мещанин, который одержим идеей стать дворянином. Его глупость и тщеславие делают его легкой добычей для мошенников.", imgPrompt: "Man in ridiculous expensive clothes looking in the mirror" },
+                            { title: "Основной конфликт", text: "Столкновение истинного благородства и пустой внешней формы. Мольер показывает, что образованность нельзя купить за деньги.", imgPrompt: "Struggle between common sense and vanity" }
+                        ]
+                    },
+                    test: {
+                        questions: [
+                            { q: "Кто написал 'Мещанин во дворянстве'?", options: ["Корнель", "Расин", "Мольер", "Вольтер"], correct: 2 },
+                            { q: "Как зовут главного героя?", options: ["Клеонт", "Дорант", "Журден", "Люсиль"], correct: 2 },
+                            { q: "Чему Журден удивился на уроке философии?", options: ["Что он говорит прозой", "Что Земля круглая", "Что буквы бывают гласные", "Что латынь сложная"], correct: 0 }
+                        ]
+                    }
+                }
+            }
+        };
+
         const API_KEY = "AIzaSyAr5VqsTgBM7vrk5NbsKjZuudjx-u_g5Ek"; 
-        // ==========================================
 
         const setupScreen = document.getElementById('setup-screen');
         const contentScreen = document.getElementById('content-screen');
@@ -137,7 +177,6 @@
         const loadingState = document.getElementById('loading-state');
         const statusBadge = document.getElementById('status-badge');
         const apiError = document.getElementById('api-error');
-        const errorText = document.getElementById('error-text');
 
         let testQuestions = [];
         let currentIdx = 0;
@@ -147,113 +186,53 @@
             const topic = document.getElementById('topic-input').value.trim();
             const subject = document.getElementById('subject-select').value;
 
-            if (!API_KEY) {
-                showError("MATB, вставь API Key!");
-                return;
-            }
-
-            if (!topic) {
-                alert("Введи тему, не тупи!");
-                return;
-            }
+            if (!topic) return alert("Бля, MATB, тему введи!");
 
             setupScreen.classList.add('hidden');
             contentScreen.classList.remove('hidden');
-            apiError.classList.add('hidden');
-            
-            if (mode === 'lecture') generateLecture(subject, topic);
-            else generateTest(subject, topic);
+
+            // Пытаемся найти в базе
+            const localData = LOCAL_DATABASE[subject]?.[topic];
+
+            if (localData) {
+                statusBadge.innerText = "ЛОКАЛЬНАЯ БАЗА";
+                setTimeout(() => {
+                    loadingState.classList.add('hidden');
+                    resultArea.classList.remove('hidden');
+                    if (mode === 'lecture') renderLecture(topic, localData.lecture);
+                    else startTest(localData.test);
+                }, 800);
+            } else {
+                // Если нет в базе - идем к ИИ
+                statusBadge.innerText = "ГЕНЕРАЦИЯ ИИ";
+                apiError.classList.remove('hidden');
+                if (mode === 'lecture') generateAI(subject, topic, 'lecture');
+                else generateAI(subject, topic, 'test');
+            }
         };
 
-        function showError(msg) {
-            setupScreen.classList.remove('hidden');
-            contentScreen.classList.add('hidden');
-            apiError.classList.remove('hidden');
-            errorText.innerText = msg;
+        function renderLecture(topic, data) {
+            resultArea.innerHTML = `<h2 class="heading text-4xl font-bold mb-10 text-white">${topic}</h2>`;
+            data.blocks.forEach(block => {
+                const el = document.createElement('div');
+                el.className = "question-card space-y-6 mb-12 border-b border-white/5 pb-10";
+                el.innerHTML = `
+                    <h3 class="text-2xl font-bold text-purple-400">${block.title}</h3>
+                    <div class="text-slate-300 leading-relaxed text-lg">${block.text}</div>
+                    <div class="rounded-3xl overflow-hidden bg-white/5 aspect-video flex flex-col items-center justify-center border border-white/5 text-slate-500">
+                        <span class="text-4xl mb-2">🖼️</span>
+                        <p class="text-[10px] uppercase font-bold tracking-tighter">Visual: ${block.imgPrompt}</p>
+                    </div>
+                `;
+                resultArea.appendChild(el);
+            });
         }
 
-        async function fetchAI(prompt, sys) {
-            // Перешли на 2.0-flash, она мощнее и доступнее
-            const model = "gemini-2.0-flash"; 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
-            
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        systemInstruction: { parts: [{ text: sys }] },
-                        generationConfig: { 
-                            responseMimeType: "application/json", 
-                            temperature: 0.8
-                        }
-                    })
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.error?.message || "Ошибка API");
-                }
-
-                const data = await response.json();
-                const text = data.candidates[0].content.parts[0].text;
-                return JSON.parse(text);
-            } catch (e) {
-                console.error(e);
-                throw e;
-            }
-        }
-
-        async function generateLecture(subject, topic) {
-            try {
-                const prompt = `Напиши подробную лекцию на русском языке про "${topic}" (Предмет: ${subject}). 
-                Раздели на 3 логических блока. Для каждого блока придумай описание для картинки на английском.
-                JSON формат: { "blocks": [{ "title": "Заголовок", "text": "Текст", "imgPrompt": "English image description" }] }`;
-                
-                const data = await fetchAI(prompt, "Ты крутой преподаватель. Объясняешь сложные вещи просто. Обращаешься на 'ты'.");
-                
-                loadingState.classList.add('hidden');
-                resultArea.classList.remove('hidden');
-                statusBadge.innerText = "ЛЕКЦИЯ";
-                
-                resultArea.innerHTML = `<h2 class="heading text-4xl font-bold mb-10 text-white">${topic}</h2>`;
-                
-                data.blocks.forEach(block => {
-                    const el = document.createElement('div');
-                    el.className = "question-card space-y-6 mb-12 border-b border-white/5 pb-10";
-                    el.innerHTML = `
-                        <h3 class="text-2xl font-bold text-purple-400">${block.title}</h3>
-                        <div class="text-slate-300 leading-relaxed text-lg">${block.text.replace(/\n/g, '<br>')}</div>
-                        <div class="rounded-3xl overflow-hidden bg-white/5 aspect-video flex flex-col items-center justify-center border border-white/5 text-slate-500 p-4 text-center">
-                            <span class="text-4xl mb-2">🖼️</span>
-                            <p class="text-xs uppercase tracking-widest font-bold">Визуализация: ${block.imgPrompt}</p>
-                        </div>
-                    `;
-                    resultArea.appendChild(el);
-                });
-            } catch (e) {
-                showError("Ошибка: " + e.message);
-            }
-        }
-
-        async function generateTest(subject, topic) {
-            try {
-                const prompt = `Создай тест из 10 вопросов на русском языке по теме "${topic}" (${subject}).
-                JSON формат: { "questions": [{ "q": "Вопрос", "options": ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"], "correct": 0 }] }`;
-                
-                const data = await fetchAI(prompt, "Ты эксперт-экзаменатор.");
-                testQuestions = data.questions;
-                
-                loadingState.classList.add('hidden');
-                resultArea.classList.remove('hidden');
-                statusBadge.innerText = "ТЕСТ";
-                currentIdx = 0;
-                score = 0;
-                renderQuestion();
-            } catch (e) {
-                showError("Ошибка: " + e.message);
-            }
+        function startTest(data) {
+            testQuestions = data.questions;
+            currentIdx = 0;
+            score = 0;
+            renderQuestion();
         }
 
         function renderQuestion() {
@@ -269,45 +248,71 @@
                 </div>
             `;
 
-            const optsDiv = document.getElementById('options');
             q.options.forEach((opt, i) => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500 transition-all font-medium text-slate-300 hover:text-white";
+                btn.className = "w-full text-left p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500 transition-all font-medium text-slate-300";
                 btn.innerText = opt;
-                btn.onclick = () => handleAnswer(i, btn);
-                optsDiv.appendChild(btn);
+                btn.onclick = () => {
+                    const all = document.querySelectorAll('#options button');
+                    all.forEach(b => b.disabled = true);
+                    if (i === q.correct) {
+                        btn.classList.add('bg-green-500/20', 'border-green-500/50', 'text-green-400');
+                        score++;
+                    } else {
+                        btn.classList.add('bg-red-500/20', 'border-red-500/50', 'text-red-400');
+                        all[q.correct].classList.add('bg-green-500/20', 'border-green-500/50', 'text-green-400');
+                    }
+                    setTimeout(() => {
+                        currentIdx++;
+                        if (currentIdx < testQuestions.length) renderQuestion();
+                        else showFinal();
+                    }, 1200);
+                };
+                document.getElementById('options').appendChild(btn);
             });
         }
 
-        function handleAnswer(choice, btn) {
-            const correct = testQuestions[currentIdx].correct;
-            const allBtns = document.querySelectorAll('#options button');
-            allBtns.forEach(b => b.disabled = true);
-
-            if (choice === correct) {
-                btn.classList.add('bg-green-500/20', 'border-green-500/50', 'text-green-400');
-                score++;
-            } else {
-                btn.classList.add('bg-red-500/20', 'border-red-500/50', 'text-red-400');
-                allBtns[correct].classList.add('bg-green-500/20', 'border-green-500/50', 'text-green-400');
-            }
-
-            setTimeout(() => {
-                currentIdx++;
-                if (currentIdx < testQuestions.length) renderQuestion();
-                else showResults();
-            }, 1200);
-        }
-
-        function showResults() {
+        function showFinal() {
             resultArea.innerHTML = `
-                <div class="text-center py-10 question-card">
-                    <div class="text-6xl mb-6">🎓</div>
-                    <h2 class="heading text-4xl font-bold mb-4">Готово!</h2>
-                    <p class="text-slate-400 text-xl mb-10">Твой результат: <span class="text-purple-400 font-bold">${score}</span> из ${testQuestions.length}</p>
-                    <button onclick="window.location.reload()" class="btn-primary px-10 py-4 rounded-2xl font-bold">Выбрать другую тему</button>
+                <div class="text-center py-10">
+                    <h2 class="heading text-4xl font-bold mb-4">Разнос окончен!</h2>
+                    <p class="text-slate-400 text-xl mb-10">Результат: ${score} / ${testQuestions.length}</p>
+                    <button onclick="window.location.reload()" class="btn-primary px-10 py-4 rounded-2xl font-bold">На главную</button>
                 </div>
             `;
+        }
+
+        async function generateAI(subject, topic, mode) {
+            try {
+                const model = "gemini-2.0-flash";
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+                
+                let prompt = "";
+                if (mode === 'lecture') {
+                    prompt = `Лекция 8 класс "${topic}" (${subject}). JSON: { "blocks": [{ "title": "...", "text": "...", "imgPrompt": "..." }] }`;
+                } else {
+                    prompt = `Тест 10 вопросов 8 класс "${topic}". JSON: { "questions": [{ "q": "...", "options": ["..."], "correct": 0 }] }`;
+                }
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                const data = await response.json();
+                const content = JSON.parse(data.candidates[0].content.parts[0].text);
+                
+                loadingState.classList.add('hidden');
+                resultArea.classList.remove('hidden');
+                if (mode === 'lecture') renderLecture(topic, content);
+                else startTest(content);
+            } catch (e) {
+                alert("ИИ тоже не вывез: " + e.message);
+            }
         }
     </script>
 </body>
