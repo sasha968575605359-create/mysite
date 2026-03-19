@@ -3,65 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой Учебный Хаб</title>
+    <title>AI Study Hub - Твой личный препод</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #121212; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: #1e1e1e; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 400px; }
-        select, input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #252525; color: white; box-sizing: border-box; }
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-lecture { background: #4caf50; color: white; }
-        .btn-quiz { background: #2196f3; color: white; }
-        button:hover { opacity: 0.8; transform: translateY(-2px); }
-        h1 { font-size: 24px; margin-bottom: 20px; color: #bb86fc; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gradient-text { background: linear-gradient(90deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hidden { display: none; }
+        .loader { border: 4px solid rgba(255, 255, 255, 0.1); border-left-color: #818cf8; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex items-center justify-center p-4">
 
-<div class="container">
-    <h1>Твой Учитель</h1>
-    
-    <label>Выбери предмет (НУШ):</label>
-    <select id="subject">
-        <option value="ukr-lang">Українська мова</option>
-        <option value="math">Математика (Алгебра/Геометрія)</option>
-        <option value="history">Історія України</option>
-        <option value="biology">Біологія</option>
-        <option value="physics">Фізика</option>
-        <option value="eng">Англійська мова</option>
-    </select>
-
-    <label>Введите тему:</label>
-    <input type="text" id="topic" placeholder="Например: Квантовая физика или Дроби">
-
-    <div class="btn-group">
-        <button class="btn-lecture" onclick="start('lecture')">Читать лекцию</button>
-        <button class="btn-quiz" onclick="start('quiz')">Пройти тест</button>
-    </div>
-</div>
-
-<script>
-    function start(type) {
-        const subject = document.getElementById('subject').value;
-        const topic = document.getElementById('topic').value;
+    <!-- Главный экран -->
+    <div id="main-screen" class="glass p-8 rounded-3xl w-full max-w-md shadow-2xl transition-all">
+        <h1 class="text-4xl font-bold mb-6 text-center gradient-text">Study AI</h1>
+        <p class="text-slate-400 text-center mb-8">Выбери предмет и тему, чтобы начать разнос в учебе.</p>
         
-        if (!topic) {
-            alert("Сначала введи тему, не тупи!");
-            return;
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Предмет (НУШ)</label>
+                <select id="subject" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="Математика">Математика</option>
+                    <option value="Українська мова">Українська мова</option>
+                    <option value="Історія України">Історія України</option>
+                    <option value="Біологія">Біологія</option>
+                    <option value="Географія">Географія</option>
+                    <option value="Фізика">Фізика</option>
+                    <option value="Хімія">Хімія</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Тема лекции/теста</label>
+                <input type="text" id="topic" placeholder="Напр: Теорема Пифагора" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mt-8">
+                <button onclick="startSession('lecture')" class="bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-indigo-500/20">📖 Лекция</button>
+                <button onclick="startSession('test')" class="bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/20">📝 Тест</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран лекции -->
+    <div id="lecture-screen" class="hidden w-full max-w-4xl space-y-6">
+        <button onclick="goHome()" class="text-slate-400 hover:text-white transition-colors">← На главную</button>
+        <div class="glass p-8 rounded-3xl">
+            <h2 id="lecture-title" class="text-3xl font-bold mb-6 gradient-text"></h2>
+            <div id="lecture-loading" class="flex flex-col items-center py-20">
+                <div class="loader mb-4"></div>
+                <p>ИИ пишет интересную лекцию и рисует картинки...</p>
+            </div>
+            <div id="lecture-content" class="prose prose-invert max-w-none space-y-6">
+                <!-- Сюда вставится контент -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран теста -->
+    <div id="test-screen" class="hidden w-full max-w-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <button onclick="goHome()" class="text-slate-400 hover:text-white">← Сдаться</button>
+            <div id="timer" class="bg-red-500/20 text-red-400 px-4 py-2 rounded-full font-mono font-bold border border-red-500/30">
+                00:00
+            </div>
+        </div>
+        <div class="glass p-8 rounded-3xl">
+            <div id="test-loading" class="flex flex-col items-center py-20">
+                <div class="loader mb-4"></div>
+                <p>ИИ придумывает сложные вопросы...</p>
+            </div>
+            <div id="test-content" class="hidden">
+                <div class="flex justify-between text-sm text-slate-400 mb-4">
+                    <span id="question-index">Вопрос 1 из 16</span>
+                    <span id="score-display">Баллы: 0</span>
+                </div>
+                <h3 id="question-text" class="text-2xl font-semibold mb-8"></h3>
+                <div id="options-container" class="grid grid-cols-1 gap-4">
+                    <!-- Кнопки ответов -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        const apiKey = ""; // Ключ подставится автоматически
+
+        let currentSubject = "";
+        let currentTopic = "";
+        let timerInterval = null;
+        let testData = [];
+        let currentQuestionIdx = 0;
+        let score = 0;
+
+        window.startSession = async (type) => {
+            currentSubject = document.getElementById('subject').value;
+            currentTopic = document.getElementById('topic').value;
+
+            if (!currentTopic.trim()) {
+                alert("Введи тему, мазафака!");
+                return;
+            }
+
+            document.getElementById('main-screen').classList.add('hidden');
+            
+            if (type === 'lecture') {
+                document.getElementById('lecture-screen').classList.remove('hidden');
+                generateLecture();
+            } else {
+                document.getElementById('test-screen').classList.remove('hidden');
+                generateTest();
+            }
+        };
+
+        window.goHome = () => {
+            clearInterval(timerInterval);
+            document.getElementById('main-screen').classList.remove('hidden');
+            document.getElementById('lecture-screen').classList.add('hidden');
+            document.getElementById('test-screen').classList.add('hidden');
+            document.getElementById('lecture-content').innerHTML = "";
+            document.getElementById('test-content').classList.add('hidden');
+        };
+
+        async function fetchAI(prompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+            const data = await response.json();
+            return JSON.parse(data.candidates[0].content.parts[0].text);
         }
 
-        // Сохраняем данные для следующей страницы
-        localStorage.setItem('currentSubject', subject);
-        localStorage.setItem('currentTopic', topic);
+        async function generateLecture() {
+            document.getElementById('lecture-title').innerText = currentTopic;
+            document.getElementById('lecture-loading').classList.remove('hidden');
+            
+            const prompt = `Напиши ИНТЕРЕСНУЮ лекцию для ученика на тему "${currentTopic}" по предмету "${currentSubject}". 
+            Используй молодежный сленг (но в меру), делай аналогии. Разбей на 3 смысловых блока. 
+            Для каждого блока придумай описание картинки, которую нужно создать.
+            Верни JSON: { blocks: [{ title: string, text: string, imagePrompt: string }] }`;
 
-        // Перенаправляем
-        if (type === 'lecture') {
-            window.location.href = 'lecture.html';
-        } else {
-            window.location.href = 'quiz.html';
+            try {
+                const data = await fetchAI(prompt);
+                const container = document.getElementById('lecture-content');
+                container.innerHTML = "";
+                
+                for (let block of data.blocks) {
+                    const blockEl = document.createElement('div');
+                    blockEl.className = "space-y-4 animate-fade-in";
+                    
+                    // Заголовок и текст
+                    blockEl.innerHTML = `<h3 class="text-2xl font-bold text-indigo-300">${block.title}</h3><p class="text-slate-300 text-lg">${block.text}</p>`;
+                    
+                    // Генерация картинки
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = "w-full aspect-video rounded-2xl bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-700 relative";
+                    imgDiv.innerHTML = `<div class="loader"></div>`;
+                    blockEl.appendChild(imgDiv);
+                    container.appendChild(blockEl);
+
+                    generateImage(block.imagePrompt).then(url => {
+                        imgDiv.innerHTML = `<img src="${url}" class="w-full h-full object-cover" alt="lecture image">`;
+                    });
+                }
+                document.getElementById('lecture-loading').classList.add('hidden');
+            } catch (e) {
+                alert("Ошибка ИИ. Попробуй еще раз.");
+                goHome();
+            }
         }
-    }
-</script>
 
+        async function generateImage(prompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify({ instances: { prompt: prompt + " digital art, educational, high quality" }, parameters: { sampleCount: 1 } })
+            });
+            const data = await response.json();
+            return `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`;
+        }
+
+        async function generateTest() {
+            document.getElementById('test-loading').classList.remove('hidden');
+            document.getElementById('test-content').classList.add('hidden');
+
+            const prompt = `Создай тест из 16 вопросов на тему "${currentTopic}" (${currentSubject}). 
+            Для каждого вопроса придумай 4 варианта ответа и один правильный.
+            Верни JSON: { questions: [{ q: string, options: [string], correct: number }] }`;
+
+            try {
+                const data = await fetchAI(prompt);
+                testData = data.questions;
+                currentQuestionIdx = 0;
+                score = 0;
+                showQuestion();
+                document.getElementById('test-loading').classList.add('hidden');
+                document.getElementById('test-content').classList.remove('hidden');
+            } catch (e) {
+                alert("Тест не сгенерировался. Давай по новой.");
+                goHome();
+            }
+        }
+
+        function showQuestion() {
+            if (currentQuestionIdx >= testData.length) {
+                finishTest();
+                return;
+            }
+
+            const q = testData[currentQuestionIdx];
+            document.getElementById('question-index').innerText = `Вопрос ${currentQuestionIdx + 1} из ${testData.length}`;
+            document.getElementById('score-display').innerText = `Баллы: ${score}`;
+            document.getElementById('question-text').innerText = q.q;
+            
+            const container = document.getElementById('options-container');
+            container.innerHTML = "";
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 rounded-xl bg-slate-800 border border-slate-700 hover:border-indigo-500 transition-all hover:bg-slate-700";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(idx);
+                container.appendChild(btn);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            // Случайное время от 5 до 10 минут (в секундах)
+            let timeLeft = (Math.floor(Math.random() * 6) + 5) * 60;
+            
+            const updateUI = () => {
+                const mins = Math.floor(timeLeft / 60);
+                const secs = timeLeft % 60;
+                document.getElementById('timer').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    checkAnswer(-1); // Время вышло
+                }
+                timeLeft--;
+            };
+
+            updateUI();
+            timerInterval = setInterval(updateUI, 1000);
+        }
+
+        function checkAnswer(selectedIdx) {
+            clearInterval(timerInterval);
+            const correct = testData[currentQuestionIdx].correct;
+
+            if (selectedIdx === correct) {
+                score++;
+            }
+
+            currentQuestionIdx++;
+            showQuestion();
+        }
+
+        function finishTest() {
+            const container = document.getElementById('test-content');
+            container.innerHTML = `
+                <div class="text-center py-10">
+                    <h2 class="text-4xl font-bold mb-4 gradient-text">Тест окончен!</h2>
+                    <p class="text-2xl mb-8">Твой результат: <span class="text-indigo-400 font-bold">${score} / ${testData.length}</span></p>
+                    <button onclick="goHome()" class="bg-indigo-600 px-8 py-3 rounded-xl font-bold">На главную</button>
+                </div>
+            `;
+        }
+    </script>
 </body>
 </html>
