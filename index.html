@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Study Hub - Твой личный препод</title>
+    <title>AI Study Hub - Твій препод</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
@@ -23,14 +23,14 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <!-- Главный экран -->
+    <!-- Головний екран -->
     <div id="main-screen" class="glass p-8 rounded-3xl w-full max-w-md shadow-2xl transition-all fade-in">
         <h1 class="text-4xl font-bold mb-6 text-center gradient-text">Study AI</h1>
-        <p class="text-slate-400 text-center mb-8">Выбери предмет и тему. Я подготовлю всё за пару секунд.</p>
+        <p class="text-slate-400 text-center mb-8">Вибери предмет і тему. Я підготую все за кілька секунд, MATB.</p>
         
         <div class="space-y-4">
             <div>
-                <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Предмет</label>
+                <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Предмет (НУШ)</label>
                 <select id="subject" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
                     <option value="Математика">Математика</option>
                     <option value="Алгебра">Алгебра</option>
@@ -40,66 +40,63 @@
                     <option value="Зарубіжна література">Зарубіжна література</option>
                     <option value="Англійська мова">Англійська мова</option>
                     <option value="Історія України">Історія України</option>
-                    <option value="Всесвітня історія">Всесвітня історія</option>
-                    <option value="Біологія і екологія">Біологія і екологія</option>
-                    <option value="Географія">Географія</option>
                     <option value="Фізика">Фізика</option>
                     <option value="Хімія">Хімія</option>
-                    <option value="Інформатика">Інформатика</option>
+                    <option value="Біологія">Біологія</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Конкретная тема</label>
-                <input type="text" id="topic" placeholder="Напр: Законы Ньютона" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <label class="block text-sm font-medium mb-1 ml-1 text-slate-300">Тема лекції/тесту</label>
+                <input type="text" id="topic" placeholder="Напр: Міщанин Шляхтич" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
 
             <div class="grid grid-cols-2 gap-4 mt-8">
-                <button onclick="startSession('lecture')" class="bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 active:scale-95">📖 Лекция</button>
-                <button onclick="startSession('test')" class="bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-bold transition-all shadow-lg shadow-purple-500/20 active:scale-95">📝 Тест</button>
+                <button onclick="startSession('lecture')" class="bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95">📖 Лекція</button>
+                <button onclick="startSession('test')" class="bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95">📝 Тест</button>
             </div>
         </div>
     </div>
 
-    <!-- Лекция -->
+    <!-- Екран Лекції -->
     <div id="lecture-screen" class="hidden w-full max-w-4xl space-y-6 fade-in">
         <button onclick="goHome()" class="text-slate-400 hover:text-white transition-colors">← Назад</button>
         <div class="glass p-8 rounded-3xl">
             <h2 id="lecture-title" class="text-3xl font-bold mb-6 gradient-text"></h2>
             <div id="lecture-loading" class="flex flex-col items-center py-20">
                 <div class="loader mb-4"></div>
-                <p class="text-slate-400">Генерирую глубокий материал...</p>
+                <p class="text-slate-400">Пишу лекцію, MATB, почекай трохи...</p>
             </div>
             <div id="lecture-content" class="space-y-10"></div>
         </div>
     </div>
 
-    <!-- Тест -->
+    <!-- Екран Тесту -->
     <div id="test-screen" class="hidden w-full max-w-2xl fade-in">
         <div class="flex justify-between items-center mb-6">
-            <button onclick="goHome()" class="text-slate-400 hover:text-white">← Прервать</button>
+            <button onclick="goHome()" class="text-slate-400 hover:text-white">← Здатися</button>
             <div id="timer" class="bg-red-500/20 text-red-400 px-4 py-2 rounded-full font-mono font-bold border border-red-500/30">10:00</div>
         </div>
         <div class="glass p-8 rounded-3xl min-h-[400px] flex flex-col">
             <div id="test-loading" class="flex flex-col items-center justify-center flex-grow py-20">
                 <div class="loader mb-4"></div>
-                <p class="text-slate-400">Создаю уникальные вопросы...</p>
+                <p id="test-status" class="text-slate-400">Створюю питання для геніїв...</p>
+                <button id="retry-test-btn" onclick="loadTest()" class="hidden mt-4 bg-slate-700 px-6 py-2 rounded-lg text-sm">Спробувати ще раз</button>
             </div>
             <div id="test-content" class="hidden">
                 <div class="flex justify-between text-sm text-slate-400 mb-6">
-                    <span id="question-index">Вопрос 1/16</span>
-                    <span id="score-display">Успех: 0</span>
+                    <span id="question-index">Питання 1/16</span>
+                    <span id="score-display">Бали: 0</span>
                 </div>
-                <h3 id="question-text" class="text-2xl font-semibold mb-8 leading-tight"></h3>
+                <h3 id="question-text" class="text-2xl font-semibold mb-8"></h3>
                 <div id="options-container" class="grid grid-cols-1 gap-3"></div>
-                <button id="next-btn" onclick="nextQuestion()" class="hidden w-full mt-8 bg-indigo-600 py-4 rounded-xl font-bold transition-all shadow-lg">Продолжить</button>
+                <button id="next-btn" onclick="nextQuestion()" class="hidden w-full mt-8 bg-indigo-600 py-4 rounded-xl font-bold shadow-lg">Далі →</button>
             </div>
         </div>
     </div>
 
     <script type="module">
         const apiKey = ""; 
-
         let currentSubject = "";
         let currentTopic = "";
         let testData = [];
@@ -109,23 +106,24 @@
         let timerVal = 600;
         let timerInt = null;
 
-        // Помощник для извлечения JSON из текста
-        function extractJSON(text) {
+        // Чистка JSON від сміття нейронки
+        function cleanJSON(text) {
             try {
                 const start = text.indexOf('{');
                 const end = text.lastIndexOf('}');
                 if (start === -1 || end === -1) return null;
-                return JSON.parse(text.substring(start, end + 1));
+                const jsonPart = text.substring(start, end + 1);
+                return JSON.parse(jsonPart);
             } catch (e) {
-                console.error("JSON Parse Error:", e, "Raw text:", text);
+                console.error("JSON Clean Error:", e);
                 return null;
             }
         }
 
-        async function callAI(prompt, isTest = false) {
+        async function askAI(prompt, isTest = false) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             
-            for (let attempt = 0; attempt < 3; attempt++) {
+            for (let i = 0; i < 3; i++) {
                 try {
                     const resp = await fetch(url, {
                         method: 'POST',
@@ -133,27 +131,29 @@
                         body: JSON.stringify({
                             contents: [{ parts: [{ text: prompt }] }],
                             generationConfig: { 
-                                temperature: isTest ? 0.3 : 0.7,
+                                temperature: isTest ? 0.1 : 0.7, // Мінімальна температура для стабільного JSON
                                 responseMimeType: "application/json"
                             }
                         })
                     });
-
-                    if (!resp.ok) throw new Error("API Error");
                     const data = await resp.json();
-                    const result = extractJSON(data.candidates[0].content.parts[0].text);
-                    if (result) return result;
+                    if (!data.candidates || !data.candidates[0]) throw new Error("Empty AI response");
+                    
+                    const text = data.candidates[0].content.parts[0].text;
+                    const parsed = cleanJSON(text);
+                    if (parsed) return parsed;
                 } catch (e) {
-                    await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                    console.warn(`Attempt ${i+1} failed...`, e);
+                    await new Promise(r => setTimeout(r, 1000 * (i + 1)));
                 }
             }
-            throw new Error("Не удалось получить данные от ИИ");
+            throw new Error("AI FAILED AFTER RETRIES");
         }
 
         window.startSession = (type) => {
             currentSubject = document.getElementById('subject').value;
             currentTopic = document.getElementById('topic').value.trim();
-            if (!currentTopic) return alert("Введите тему!");
+            if (!currentTopic) return alert("Введи тему, MATB!");
 
             document.getElementById('main-screen').classList.add('hidden');
             if (type === 'lecture') {
@@ -171,53 +171,61 @@
             const content = document.getElementById('lecture-content');
             content.innerHTML = "";
 
-            const prompt = `Действуй как профессиональный учитель. Напиши подробную лекцию по теме "${currentTopic}" (предмет: ${currentSubject}). 
-            Разбей на 4-5 логических блоков. Для каждого блока придумай описание картинки (imagePrompt).
-            Формат: { "blocks": [{ "title": "Заголовок", "text": "Текст", "imagePrompt": "описание для нейросети" }] }`;
+            const prompt = `Дій як найкращий вчитель у світі. Напиши лекцію для учня на тему "${currentTopic}" (предмет: ${currentSubject}). 
+            Розбий на 4 блоки. Для кожного блоку дай imagePrompt для генерації ілюстрації.
+            Формат відповіді: JSON { "blocks": [{ "title": "Заголовок", "text": "Текст", "imagePrompt": "опис" }] }`;
 
             try {
-                const data = await callAI(prompt);
+                const data = await askAI(prompt);
                 document.getElementById('lecture-loading').classList.add('hidden');
                 
-                for (let b of data.blocks) {
-                    const div = document.createElement('div');
-                    div.className = "fade-in space-y-4";
-                    div.innerHTML = `<h3 class="text-2xl font-bold text-indigo-300">${b.title}</h3><p class="text-slate-300 text-lg leading-relaxed">${b.text}</p>`;
+                data.blocks.forEach(b => {
+                    const block = document.createElement('div');
+                    block.className = "fade-in space-y-4";
+                    block.innerHTML = `
+                        <h3 class="text-2xl font-bold text-indigo-300 border-l-4 border-indigo-500 pl-4">${b.title}</h3>
+                        <p class="text-slate-300 text-lg leading-relaxed">${b.text}</p>
+                    `;
                     
-                    const imgBox = document.createElement('div');
-                    imgBox.className = "w-full aspect-video rounded-2xl bg-slate-800/40 border border-white/5 flex items-center justify-center overflow-hidden";
-                    imgBox.innerHTML = '<div class="loader"></div>';
-                    div.appendChild(imgBox);
-                    content.appendChild(div);
+                    const imgPlaceholder = document.createElement('div');
+                    imgPlaceholder.className = "w-full aspect-video rounded-2xl bg-slate-800/50 border border-white/5 flex items-center justify-center overflow-hidden shadow-inner";
+                    imgPlaceholder.innerHTML = '<div class="loader"></div>';
+                    block.appendChild(imgPlaceholder);
+                    content.appendChild(block);
 
-                    generateImg(b.imagePrompt).then(url => {
-                        imgBox.innerHTML = `<img src="${url}" class="w-full h-full object-cover" alt="иллюстрация">`;
+                    generateImage(b.imagePrompt).then(url => {
+                        imgPlaceholder.innerHTML = `<img src="${url}" class="w-full h-full object-cover transition-opacity duration-700 opacity-0" onload="this.style.opacity='1'" alt="візуалізація">`;
                     });
-                }
+                });
             } catch (e) {
-                alert("Ошибка связи. Попробуй еще раз.");
+                alert("MATB, лекція не завантажилась. Спробуй ще раз.");
                 goHome();
             }
         }
 
-        async function generateImg(p) {
+        async function generateImage(p) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
             try {
                 const r = await fetch(url, {
                     method: 'POST',
-                    body: JSON.stringify({ instances: { prompt: `${p}, educational style, high quality` } })
+                    body: JSON.stringify({ instances: { prompt: `${p}, educational digital art style, bright colors, 4k` } })
                 });
                 const d = await r.json();
                 return `data:image/png;base64,${d.predictions[0].bytesBase64Encoded}`;
-            } catch { return "https://images.unsplash.com/photo-1532012197367-2d12638847ad?q=80&w=800"; }
+            } catch { return "https://images.unsplash.com/photo-1454165833767-131f72602f80?q=80&w=800"; }
         }
 
-        async function loadTest() {
-            const prompt = `Создай тест из 16 вопросов по теме "${currentTopic}" (предмет: ${currentSubject}). 
-            Один правильный ответ. Формат: { "questions": [{ "q": "Вопрос", "options": ["А", "Б", "В", "Г"], "correct": 0 }] }`;
+        window.loadTest = async () => {
+            document.getElementById('test-loading').classList.remove('hidden');
+            document.getElementById('test-content').classList.add('hidden');
+            document.getElementById('retry-test-btn').classList.add('hidden');
+            document.getElementById('test-status').innerText = "Створюю питання для геніїв...";
+
+            const prompt = `Створи тест з 16 складних питань на тему "${currentTopic}" (предмет: ${currentSubject}). 
+            Один правильний варіант. Тільки JSON формат: { "questions": [{ "q": "Питання", "options": ["А", "Б", "В", "Г"], "correct": 0 }] }`;
 
             try {
-                const data = await callAI(prompt, true);
+                const data = await askAI(prompt, true);
                 testData = data.questions;
                 currentQuestionIdx = 0;
                 score = 0;
@@ -226,77 +234,77 @@
                 renderQuestion();
                 startTimer();
             } catch (e) {
-                alert("Не удалось создать тест. Попробуй другую тему.");
-                goHome();
+                document.getElementById('test-status').innerText = "Помилка генерації. ІІ тупить.";
+                document.getElementById('retry-test-btn').classList.remove('hidden');
+                document.querySelector('#test-loading .loader').classList.add('hidden');
             }
-        }
+        };
 
         function renderQuestion() {
             isAnswered = false;
             document.getElementById('next-btn').classList.add('hidden');
             const q = testData[currentQuestionIdx];
-            document.getElementById('question-index').innerText = `Вопрос ${currentQuestionIdx + 1}/${testData.length}`;
+            document.getElementById('question-index').innerText = `Питання ${currentQuestionIdx + 1}/16`;
             document.getElementById('question-text').innerText = q.q;
             
             const container = document.getElementById('options-container');
             container.innerHTML = "";
             q.options.forEach((opt, i) => {
-                const b = document.createElement('button');
-                b.className = "option-btn w-full text-left p-4 rounded-xl bg-slate-800/60 border border-white/10 hover:border-indigo-500/50 transition-all active:scale-[0.98]";
-                b.innerText = opt;
-                b.onclick = () => selectOption(i, b);
-                container.appendChild(b);
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full text-left p-4 rounded-xl bg-slate-800 border border-white/5 hover:border-indigo-500/50 transition-all active:scale-[0.98]";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if (isAnswered) return;
+                    isAnswered = true;
+                    if (i === q.correct) {
+                        score++;
+                        btn.classList.add('correct');
+                    } else {
+                        btn.classList.add('wrong');
+                        const btns = document.querySelectorAll('.option-btn');
+                        if (btns[q.correct]) btns[q.correct].classList.add('correct');
+                    }
+                    document.getElementById('score-display').innerText = `Бали: ${score}`;
+                    document.getElementById('next-btn').classList.remove('hidden');
+                };
+                container.appendChild(btn);
             });
-        }
-
-        function selectOption(idx, btn) {
-            if (isAnswered) return;
-            isAnswered = true;
-            const correct = testData[currentQuestionIdx].correct;
-            const all = document.querySelectorAll('.option-btn');
-            
-            all[correct].classList.add('correct');
-            if (idx === correct) {
-                score++;
-            } else {
-                btn.classList.add('wrong');
-            }
-            document.getElementById('score-display').innerText = `Успех: ${score}`;
-            document.getElementById('next-btn').classList.remove('hidden');
         }
 
         window.nextQuestion = () => {
             currentQuestionIdx++;
             if (currentQuestionIdx < testData.length) renderQuestion();
-            else finish();
+            else finishTest();
         };
 
         function startTimer() {
             clearInterval(timerInt);
             timerVal = 600;
+            const timerEl = document.getElementById('timer');
             timerInt = setInterval(() => {
                 timerVal--;
                 const m = Math.floor(timerVal/60), s = timerVal%60;
-                document.getElementById('timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
-                if (timerVal <= 0) finish();
+                timerEl.innerText = `${m}:${s < 10 ? '0'+s : s}`;
+                if (timerVal <= 0) finishTest();
             }, 1000);
         }
 
-        function finish() {
+        function finishTest() {
             clearInterval(timerInt);
-            const content = document.getElementById('test-content');
-            content.innerHTML = `
+            document.getElementById('test-content').innerHTML = `
                 <div class="text-center py-10 fade-in">
-                    <h2 class="text-4xl font-bold mb-4 gradient-text">Готово!</h2>
-                    <p class="text-xl text-slate-400 mb-8">Результат: <span class="text-white font-bold">${score} из ${testData.length}</span></p>
-                    <button onclick="goHome()" class="bg-indigo-600 px-10 py-4 rounded-xl font-bold shadow-lg shadow-indigo-500/20 active:scale-95">На главную</button>
+                    <h2 class="text-4xl font-bold mb-4 gradient-text">Кінець тесту!</h2>
+                    <p class="text-xl text-slate-400 mb-8">Твій результат: <span class="text-white font-bold">${score} з ${testData.length}</span></p>
+                    <div class="space-y-4">
+                        <button onclick="goHome()" class="w-full bg-indigo-600 px-10 py-4 rounded-xl font-bold shadow-lg active:scale-95">На головну</button>
+                    </div>
                 </div>
             `;
         }
 
         window.goHome = () => {
             clearInterval(timerInt);
-            location.reload(); // Простой способ сбросить состояние
+            location.reload();
         };
     </script>
 </body>
